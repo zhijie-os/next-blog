@@ -2,7 +2,7 @@ import Project from "../components/project";
 
 export default function Projects() {
   return (
-    <div>
+    <div className="flex flex-col space-y-4">
       <Project
         title="RealityCanvas"
         description="ACM CHI 2023 submission"
