@@ -20,36 +20,51 @@ export default function Layout({ children, home }: { children: any, home: any })
 
             {/* my big ugly face */}
             <Navbar></Navbar>
-            <header>
+            <header className="flex justify-center">
                 {home ? (
                     <>
-                        <Image
-                            priority
-                            src="/images/avatar.png"
-                            className="rounded-full"
-                            height={144}
-                            width={144}
-                            alt=""
-                        >
-                        </Image>
-                        <h1 >Zhijie Xia</h1>
+                        <div className="flex flex-col">
+                            <div className="flex justify-center">
+                                <Image
+                                    priority
+                                    src="/images/avatar.png"
+                                    className="rounded-full"
+                                    height={144}
+                                    width={144}
+                                    alt=""
+                                ></Image>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <h1 >Zhijie Xia</h1>
+                            </div>
+                        </div>
+
                     </>
                 ) : (
                     <>
-                        <Link href="/">
-                            <Image
-                                priority
-                                src="/images/avatar.png"
-                                height={108}
-                                width={108}
-                                alt=""
-                            />
-                        </Link>
-                        <h2 >
-                            <Link href="/" >
-                                {name}
-                            </Link>
-                        </h2>
+                        <div className="flex flex-col">
+                            <div className="flex justify-center">
+                                <Link href="/">
+                                    <Image
+                                        priority
+                                        className="rounded-full"
+                                        src="/images/avatar.png"
+                                        height={108}
+                                        width={108}
+                                        alt=""
+                                    />
+                                </Link>
+                            </div>
+                            <div className="flex justify-center">
+                                <h2 >
+                                    <Link href="/" >
+                                        {name}
+                                    </Link>
+                                </h2>
+                            </div>
+                        </div>
+
                     </>
                 )
 
@@ -64,6 +79,6 @@ export default function Layout({ children, home }: { children: any, home: any })
                 </div>
             )
             } */}
-        </div>
+        </div >
     )
 }
