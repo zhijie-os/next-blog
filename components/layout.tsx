@@ -9,12 +9,14 @@ export const siteTitle = "Zhijie Xia | UCalgary"
 
 export default function Layout({ children, home }: { children: any, home: any }) {
     return (
-        <div className={styles.container}>
+        <div className="container">
             <Head>
                 <link rel="icon" href="/robot.svg" />
                 <meta name="description" content="Zhijie Xia at University of Calgary" />
                 {/* <meta property="og:image" content={``}></meta> */}
             </Head>
+
+            {/* my big ugly face */}
             <header className={styles.header}>
                 {home ? (
                     <>
