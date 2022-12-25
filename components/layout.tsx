@@ -4,7 +4,7 @@ import Image from 'next/image'
 // import utilStyles from "../styles/utils.module.css"
 import Link from 'next/link'
 import Navbar from './navbar'
-
+import Footer from './footer'
 
 const name = "Zhijie Xia"
 export const siteTitle = "Zhijie Xia | UCalgary"
@@ -70,7 +70,7 @@ export default function Layout({ children, home }: { children: any, home: any })
 
                 }
             </header>
-            <main>
+            <main className='flex justify-center'>
                 {children}
             </main>
             {/* {!home && (
@@ -79,6 +79,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 </div>
             )
             } */}
+            <Footer></Footer>
         </div >
     )
 }
