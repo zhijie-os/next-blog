@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import MobileNavbar from "./mobileNavbar";
 
 const headerNavLinks:{title:string;href:string}[] = [{title:"Home",href:"/"},{title:"Blog",href:"/blogs"},{title:"Projects",href:"/projects"}]
 
@@ -23,7 +23,7 @@ export default function Navbar() {
                     ))}
                 </div>
                 {/* <ThemeSwitch /> */}
-                {/* <MobileNav /> */}
+                <MobileNavbar />
             </div>
         </div>
     )

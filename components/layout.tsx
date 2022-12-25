@@ -67,7 +67,6 @@ export default function Layout({ children, home }: { children: any, home: any })
 
                     </>
                 )
-
                 }
             </header>
             <main className='flex justify-center'>
