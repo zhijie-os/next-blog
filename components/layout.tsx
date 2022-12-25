@@ -1,15 +1,17 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from "../styles/layout.module.css"
-import utilStyles from "../styles/utils.module.css"
+// import styles from "../styles/layout.module.css"
+// import utilStyles from "../styles/utils.module.css"
 import Link from 'next/link'
+import Navbar from './navbar'
+
 
 const name = "Zhijie Xia"
 export const siteTitle = "Zhijie Xia | UCalgary"
 
 export default function Layout({ children, home }: { children: any, home: any }) {
     return (
-        <div className="container">
+        <div className="flex h-screen flex-col justify-between">
             <Head>
                 <link rel="icon" href="/robot.svg" />
                 <meta name="description" content="Zhijie Xia at University of Calgary" />
@@ -17,19 +19,20 @@ export default function Layout({ children, home }: { children: any, home: any })
             </Head>
 
             {/* my big ugly face */}
-            <header className={styles.header}>
+            <Navbar></Navbar>
+            <header>
                 {home ? (
                     <>
                         <Image
                             priority
                             src="/images/avatar.png"
-                            className={utilStyles.borderCircle}
+                            className="rounded-full"
                             height={144}
                             width={144}
                             alt=""
                         >
                         </Image>
-                        <h1 className={utilStyles.heading2Xl}>Zhijie Xia</h1>
+                        <h1 >Zhijie Xia</h1>
                     </>
                 ) : (
                     <>
@@ -37,30 +40,30 @@ export default function Layout({ children, home }: { children: any, home: any })
                             <Image
                                 priority
                                 src="/images/avatar.png"
-                                className={utilStyles.borderCircle}
                                 height={108}
                                 width={108}
                                 alt=""
                             />
                         </Link>
-                        <h2 className={utilStyles.headingLg}>
-                            <Link href="/" className={utilStyles.colorInherit}>
+                        <h2 >
+                            <Link href="/" >
                                 {name}
                             </Link>
                         </h2>
                     </>
                 )
+
                 }
             </header>
             <main>
                 {children}
             </main>
-            {!home && (
-                <div className={styles.backToHome}>
+            {/* {!home && (
+                <div >
                     <Link href="/">← Back to home</Link>
                 </div>
             )
-            }
+            } */}
         </div>
     )
 }
