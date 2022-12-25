@@ -1,46 +1,9 @@
 import Project from "../components/project";
 import Layout from "../components/layout";
 
-type Project = {
-  title: string;
-  description: string;
-  imageUrl?: string;
-  youtubeId?: string;
-  link: string;
-}
+import { ProjectData } from "../data/projectData";
 
-const ProjectData: Project[] = [
-  {
-    title: "RealityCanvas",
-    description: "ACM CHI 2023 submission",
-    youtubeId: "3P1uGJaSVfg",
-    link: "/"
-  },
-  {
-    title: "RealityCanvas",
-    description: "This will be a very very very long long long title",
-    imageUrl: "/images/avatar.png",
-    link: "/"
-  },
-  {
-    title: "RealityCanvas",
-    description: "This will be a very very very long long long title",
-    imageUrl: "/images/avatar.png",
-    link: "/"
-  },
-  {
-    title: "RealityCanvas",
-    description: "This will be a very very very long long long title",
-    imageUrl: "/images/avatar.png",
-    link: "/"
-  },
-  {
-    title: "RealityCanvas",
-    description: "This will be a very very very long long long title",
-    imageUrl: "/images/avatar.png",
-    link: "/"
-  },
-]
+
 
 export default function Projects() {
   return (
@@ -64,7 +27,6 @@ export default function Projects() {
                 title={p.title}
                 description={p.description}
                 link={p.link}
-                youtubeId={p.youtubeId}
                 imageUrl={p.imageUrl}
               ></Project>
             ))}
