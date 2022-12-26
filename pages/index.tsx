@@ -8,9 +8,7 @@ export default function Home() {
   return (
     <Layout home={true}>
       {/* layout header still work, this adds to the layout header */}
-      <Head>
-        <title>Not Title</title>
-      </Head>
+
       <section className={utilStyles.headingMd}>
         <p>[Your Self Introduction]</p>
         <p>

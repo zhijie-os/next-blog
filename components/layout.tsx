@@ -14,6 +14,7 @@ export default function Layout({ children, home }: { children: any, home: any })
         <div className="flex h-screen flex-col justify-between">
             <Head>
                 <link rel="icon" href="/robot.svg" />
+                <title>Zhijie Xia | UCalgary</title>
                 <meta name="description" content="Zhijie Xia at University of Calgary" />
                 {/* <meta property="og:image" content={``}></meta> */}
             </Head>
