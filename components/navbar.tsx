@@ -6,13 +6,13 @@ const headerNavLinks: { title: string; href: string }[] = [{ title: "Home", href
 export default function Navbar() {
     return (
         <div className="flex justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center p-4">
                 <Image 
-                    src="/linux.svg" 
+                    src="/signature-white.svg" 
                     alt="logo" 
-                    width={80} 
-                    height={80}/>
-                <h1 className="text-3xl text-white">Keep Coding!</h1>
+                    width={144} 
+                    height={144}/>
+                {/* <h1 className="text-3xl text-white">Keep Coding!</h1> */}
             </div>
 
             <div className="flex items-center text-base leading-5">

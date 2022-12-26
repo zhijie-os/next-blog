@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link';
-const headerNavLinks:{title:string;href:string}[] = [{title:"Home",href:"/"},{title:"Blog",href:"/blogs"},{title:"Projects",href:"/projects"}]
-
+const headerNavLinks: { title: string; href: string }[] = [{ title: "Home", href: "/" }, { title: "Blog", href: "/posts" }, { title: "Projects", href: "/projects" }]
+import Image from 'next/image';
 export default function MobileNavbar() {
     const [navShow, setNavShow] = useState(false);
 
@@ -23,7 +23,13 @@ export default function MobileNavbar() {
         <div className="sm:hidden">
             {/* toggle button */}
             <button type="button" className="ml-1 mr-1 rounded py-1"
-                onClick={onToggleNav}>Toggle</button>
+                onClick={onToggleNav}>
+                <Image
+                    src="/toggle.svg"
+                    alt="logo"
+                    width={48}
+                    height={48} />
+            </button>
             <div
                 className={`fixed top-0 left-0 z-10 h-full w-full transform bg-gray-200 opacity-95 duration-300 ease-in-out dark:bg-gray-800 ${navShow ? 'translate-x-0' : 'translate-x-full'
                     }`}
@@ -35,7 +41,11 @@ export default function MobileNavbar() {
                         aria-label="Toggle Menu"
                         onClick={onToggleNav}
                     >
-                        Close
+                        <Image
+                            src="/close.svg"
+                            alt="logo"
+                            width={80}
+                            height={80} />
                     </button>
                 </div>
                 <nav className="fixed mt-8 h-full">
