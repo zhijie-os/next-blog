@@ -9,7 +9,7 @@ const ProjectData: ProjectProps[] = [
     {
         title: "RealityCanvas",
         description: "This will be a very very very long long long title",
-        imageUrl: "/images/avatar.png",
+        imageUrl: "/teaser/reality-canvas.gif",
         link: "/"
     },
     {

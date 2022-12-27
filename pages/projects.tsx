@@ -22,13 +22,14 @@ export default function Projects() {
         <div className="container py-12">
           <div className="-m-4 flex flex-wrap">
             {ProjectData.map((p) => (
-              <Project
-                key={p.title}
-                title={p.title}
-                description={p.description}
-                link={p.link}
-                imageUrl={p.imageUrl}
-              ></Project>
+              <div key={p.title} className='py-4'>
+                <Project
+                  title={p.title}
+                  description={p.description}
+                  link={p.link}
+                  imageUrl={p.imageUrl}
+                ></Project>
+              </div>
             ))}
           </div>
         </div>

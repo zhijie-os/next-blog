@@ -14,7 +14,7 @@ export async function getStaticProps() {
 
 export default function Posts({ allPostsData }: { allPostsData: any }) {
     return (
-        <Layout home={true}>
+        <Layout home={false}>
             <div className="flex flex-col">
                 <h2 >Blog</h2>
                 <ul >

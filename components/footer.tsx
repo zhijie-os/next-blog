@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export default function Footer() {
     return (
-        <footer>
+        <footer className='flex flex-col'>
             <div className="mb-3 flex justify-center space-x-4" >
                 {/* github */}
                 <div className="rounded-full shadow-lg shadow-gray-400 p-2 cursor-pointer hover:scale-110 ease-in duration-300">
@@ -19,6 +19,15 @@ export default function Footer() {
                     <a href="mailto:zhijiexiacs@gmail.com"><AiFillMail size={"32px"} /></a>
                 </div>
             </div>
+
+            <div className="flex justify-center mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                <div>Zhijie Xia</div>
+                <div>{` • `}</div>
+                <div>{`© ${new Date().getFullYear()}`}</div>
+                <div>{` • `}</div>
+                <Link href="/">zhijiexia.dev</Link>
+            </div>
+
         </footer>
 
     )

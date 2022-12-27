@@ -7,11 +7,12 @@ export default function Navbar() {
     return (
         <div className="flex justify-between">
             <div className="flex items-center p-4">
-                <Image 
+                <Link href="/"><Image 
                     src="/signature-white.svg" 
                     alt="logo" 
                     width={144} 
                     height={144}/>
+                </Link>
                 {/* <h1 className="text-3xl text-white">Keep Coding!</h1> */}
             </div>
 

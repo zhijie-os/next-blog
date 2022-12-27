@@ -6,7 +6,7 @@ import { ProjectProps } from '../data/projectData';
 export default function Project({ title, description, imageUrl, link }: ProjectProps) {
     return (
         // 1 on small, 2 on medium, 4 on large
-        <div className="p-4 md:w-1/2 lg:w-1/3" style={{ maxWidth: '544px' }}>
+        <div className="md:w-1/2 lg:w-1/3" style={{ maxWidth: '544px' }}>
             {/* Teaser Video or Image  */}
             <div className="h-full overflow-hidden rounded-md border-2 border-gray-200 border-opacity-60 dark:border-gray-700">
 

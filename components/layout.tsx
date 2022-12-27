@@ -51,18 +51,11 @@ export default function Layout({ children, home }: { children: any, home: any })
                                         priority
                                         className="rounded-full"
                                         src="/images/avatar.png"
-                                        height={108}
-                                        width={108}
+                                        height={88}
+                                        width={88}
                                         alt=""
                                     />
                                 </Link>
-                            </div>
-                            <div className="flex justify-center">
-                                <h2 >
-                                    <Link href="/" >
-                                        {name}
-                                    </Link>
-                                </h2>
                             </div>
                         </div>
 
@@ -70,7 +63,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 )
                 }
             </header>
-            <main className='flex justify-center'>
+            <main className='flex justify-center p-16'>
                 {children}
             </main>
             {/* {!home && (
