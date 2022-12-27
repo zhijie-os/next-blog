@@ -1,7 +1,7 @@
 import Link from "next/link";
 import MobileNavbar from "./mobileNavbar";
 import Image from "next/image";
-const headerNavLinks: { title: string; href: string }[] = [{ title: "Home", href: "/" }, { title: "Blog", href: "/posts" }, { title: "Projects", href: "/projects" }]
+const headerNavLinks: { title: string; href: string }[] = [{ title: "HOME", href: "/" }, { title: "BLOG", href: "/posts" }, { title: "PROJECT", href: "/projects" }]
 
 export default function Navbar() {
     return (
@@ -22,7 +22,7 @@ export default function Navbar() {
                         <Link
                             key={link.title}
                             href={link.href}
-                            className="p-1 font-medium sm:p-4"
+                            className="font-medium sm:p-4 "
                         >
                             {link.title}
                         </Link>

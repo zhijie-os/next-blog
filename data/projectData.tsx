@@ -8,7 +8,7 @@ type ProjectProps = {
 const ProjectData: ProjectProps[] = [
     {
         title: "RealityCanvas",
-        description: "This will be a very very very long long long title",
+        description: "This will be a very very very long long long longer longer longer longer longer longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longer title",
         imageUrl: "/teaser/reality-canvas.gif",
         link: "/"
     },

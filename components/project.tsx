@@ -6,9 +6,9 @@ import { ProjectProps } from '../data/projectData';
 export default function Project({ title, description, imageUrl, link }: ProjectProps) {
     return (
         // 1 on small, 2 on medium, 4 on large
-        <div className="md:w-1/2 lg:w-1/3" style={{ maxWidth: '544px' }}>
+        <div className="w-full flex flex-col lg:flex-row" >
             {/* Teaser Video or Image  */}
-            <div className="h-full overflow-hidden rounded-md border-2 border-gray-200 border-opacity-60 dark:border-gray-700">
+            <div className="lg:w-1/3 h-full overflow-hidden rounded-md ">
 
                 <Image
                     className="rounded object-cover object-center md:h-36 lg:h-48"
@@ -18,6 +18,9 @@ export default function Project({ title, description, imageUrl, link }: ProjectP
                     width={544}
                     height={306}
                 />
+            </div>
+
+            <div className="md:w-2/3 flex flex-col">
                 {/* Title */}
                 <div className="p-y-6 pl-2">
                     <h2 className="mb-3 text-2xl font-bold leading-8 tracking-tight">{title}</h2>

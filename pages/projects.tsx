@@ -8,7 +8,7 @@ import { ProjectData } from "../data/projectData";
 export default function Projects() {
   return (
     <Layout home={false}>
-      <div className="divide-y divide-gray-200 dark-divide-gray-700">
+      <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
           <h1 className="text-3xl font-extrabold leading- tracking-tight text-gray-900 dark:text-gray-100 sm:leading-10 md:text-4xl md:leading-14">
             Projects
@@ -19,10 +19,10 @@ export default function Projects() {
         </div>
 
         {/* map each project data to a project card */}
-        <div className="container py-12">
-          <div className="-m-4 flex flex-wrap">
+        <div className="container ">
+          <div className="m-4 flex flex-col divide-y divide-gray-200">
             {ProjectData.map((p) => (
-              <div key={p.title} className='py-4'>
+              <div key={p.title} className='py-4 flex jusitfy-center'>
                 <Project
                   title={p.title}
                   description={p.description}
