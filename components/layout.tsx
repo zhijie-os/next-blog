@@ -37,7 +37,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                             </div>
 
                             <div className="flex justify-center">
-                                <h1 >Zhijie Xia</h1>
+                                <a href={"/Zhijie_Xia_UCalgary_Resume.pdf"} target="_blank" rel="noreferrer">Resume</a>
                             </div>
                         </div>
 

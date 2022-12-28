@@ -13,9 +13,9 @@ const ProjectData: ProjectProps[] = [
         link: "/"
     },
     {
-        title: "RealityCanvas",
+        title: "The Witching Knight",
         description: "This will be a very very very long long long title",
-        imageUrl: "/images/avatar.png",
+        imageUrl: "/teaser/the-witching-knight.gif",
         link: "/"
     },
     {
