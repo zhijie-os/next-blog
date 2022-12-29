@@ -8,27 +8,15 @@ type ProjectProps = {
 const ProjectData: ProjectProps[] = [
     {
         title: "RealityCanvas",
-        description: "This will be a very very very long long long longer longer longer longer longer longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longer longer longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longerlonger longer longer title",
+        description: "Mobile AR sketching tool for creating dynamic scribble animations that respond to real-world motion and object movement. Offers a variety of animation techniques for expressive and versatile AR-based sketches. Designed to facilitate creation of AR-based sketches and enhance user experience.",
         imageUrl: "/teaser/reality-canvas.gif",
-        link: "/"
+        link: "https://www.youtube.com/watch?v=3P1uGJaSVfg"
     },
     {
         title: "The Witching Knight",
-        description: "This will be a very very very long long long title",
+        description: "2D top-down shooting game in JavaFX. Players navigate through levels, defeat enemies, and complete objectives using a variety of weapons and power-ups. Features single-player campaign mode and multiplayer mode. May include boss battles and a leveling system.",
         imageUrl: "/teaser/the-witching-knight.gif",
-        link: "/"
-    },
-    {
-        title: "RealityCanvas",
-        description: "This will be a very very very long long long title",
-        imageUrl: "/images/avatar.png",
-        link: "/"
-    },
-    {
-        title: "RealityCanvas",
-        description: "This will be a very very very long long long title",
-        imageUrl: "/images/avatar.png",
-        link: "/"
+        link: "https://github.com/zhijie-os/The-Witching-Knight"
     },
 ]
 
