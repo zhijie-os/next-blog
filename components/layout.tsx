@@ -12,7 +12,7 @@ export const siteTitle = "Zhijie Xia | UCalgary"
 
 export default function Layout({ children, home }: { children: any, home: any }) {
     return (
-        <div className="flex h-screen flex-col justify-between">
+        <div className="flex h-screen flex-col">
             <Head>
                 <link rel="icon" href="/robot.svg" />
                 <title>Zhijie Xia | UCalgary</title>
@@ -21,6 +21,7 @@ export default function Layout({ children, home }: { children: any, home: any })
             </Head>
 
             {/* my big ugly face */}
+            {/* <div "flex flex-col "></div> */}
             <Navbar></Navbar>
             <header className="flex justify-center">
                 {home ? (
