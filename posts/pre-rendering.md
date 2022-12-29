@@ -1,5 +1,5 @@
 ---
-title: 'Two Forms of Pre-rendering long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  long long long long long long long long long long long long long long long long long long long long'
+title: 'Two Forms of Pre-rendering long'
 date: '2020-01-01'
 ---
 
