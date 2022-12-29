@@ -63,7 +63,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 )
                 }
             </header>
-            <main className='flex justify-center p-16'>
+            <main className='flex justify-center items-center p-16'>
                 {children}
             </main>
             {/* {!home && (

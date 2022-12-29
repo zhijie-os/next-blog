@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <Layout home={true}>
       {/* layout header still work, this adds to the layout header */}
-      <div className="w-full  text-center">
-        <div className="max-w-[1240px] w-full mx-auto p-2 flex justify-center items-center">
+      <div className="w-full text-center">
+        <div className="max-w-4xl w-full mx-auto p-2 flex justify-center items-center">
           <div>
             <h1 className="text-4xl py-2 font-bold">
               <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
