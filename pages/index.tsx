@@ -11,7 +11,9 @@ export default function Home() {
       <div className="w-full  text-center">
         <div className="max-w-[1240px] w-full mx-auto p-2 flex justify-center items-center">
           <div>
-            <h1 className="text-4xl py-2 font-bold">Zhijie Xia is an undergraduate student and researcher at University of Calgary.</h1>
+            <h1 className="text-4xl py-2 font-bold">
+              <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
+            </h1>
             <p className="py-4">
               As a student majored in Computer Science at
               University of Calgary, Zhijie received multiple scholarships

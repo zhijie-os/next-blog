@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from './navbar'
 import Footer from './footer'
+import LinkBar from './linkbar'
 
 const name = "Zhijie Xia"
 export const siteTitle = "Zhijie Xia | UCalgary"
@@ -36,9 +37,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                                 ></Image>
                             </div>
 
-                            <div className="flex justify-center">
-                                <a href={"/Zhijie_Xia_UCalgary_Resume.pdf"} target="_blank" rel="noreferrer">Resume</a>
-                            </div>
+                            <LinkBar></LinkBar>
                         </div>
 
                     </>
