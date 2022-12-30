@@ -19,7 +19,6 @@ export default function LinkBar() {
             </a>
 
             {/* linkedin */}
-
             <a className="mx-1 flex flex-col items-center" href="https://www.linkedin.com/in/zhijie-xia-678b331b5/" target="_blank" rel="noreferrer">
                 <FaLinkedin size={"24px"} />
                 LinkedIn
