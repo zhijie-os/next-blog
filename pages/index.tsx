@@ -15,16 +15,16 @@ export default function Home() {
               <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
             </h1>
             <p className="py-4">
-              As a student majored in Computer Science at
+              As a student majors in Computer Science at
               University of Calgary, Zhijie received multiple scholarships
               and awards for his
               outstanding academic performance.
-              He has taken most of essential computer science
-              such as Operating System, Algorithm & Date Structure,
+              He has taken most of essential computer science courses
+              such as Operating System, Algorithm&Data Structure,
               Compiler Construction, Computer Network, Network Security,
               System Security and etc. He is ready to apply his skills
               in the field of software engineering and looking for
-              FOSS project to contribute.
+              FOSS projects to contribute.
             </p>
 
             <p className="py-4">
@@ -40,7 +40,7 @@ export default function Home() {
               Programmble Reality Lab at University of Calgary.
               He developed an AR-sketching system called RealityCanvas
               to allow users to create animation in real-time with ease. Moreover,
-              he submitted the system as a research paper to ACM SIGCHI 2023.
+              he submitted the system to ACM SIGCHI 2023 as leading author.
             </p>
           </div>
         </div>
