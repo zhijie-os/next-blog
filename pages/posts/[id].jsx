@@ -17,7 +17,7 @@ export default function Post({ postData }) {
             <Head>
                 <title>{postData.title}</title>
             </Head>
-            <article className="max-w-4xl flex flex-col">
+            <article className="post max-w-4xl flex flex-col">
                 <h1 className={utilStyles.headingXl}>{postData.title}</h1>
                 <div className={utilStyles.lightText}>
                     <Date dateString={postData.date} />
@@ -32,16 +32,16 @@ export default function Post({ postData }) {
                                     showLineNumbers={true}
                                     showInlineLineNumbers={true} // <-- add this prop!
                                     wrapLines={true}
-                                    customStyle={{width:"calc(100vw - 50px)"}}
+                                    customStyle={{ width: "calc(100vw - 50px)" }}
                                     style={nord}
                                     language={match[1]}
                                     PreTag="div"
                                     {...props}
                                 >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
                             ) : (
-                                <code className={className} {...props}>
-                                    {children}
-                                </code>
+                                    <code className='bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
+                                        {children}
+                                    </code>
                             )
                         }
                     }}>{postData.content}</ReactMarkdown>

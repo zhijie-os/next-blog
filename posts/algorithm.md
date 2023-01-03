@@ -9,6 +9,14 @@ In the past, I have tried to improve my algorithm skills but I didn't stick with
 # Leetcode
 
 ## Two Sum
+Inline code block `print("Hello World");`
+
+This is bold **Bold Text**
+
+
+
+![Image here](/images/avatar.png)
+### Three some
 ~~~rust
 use std::collections::HashMap;
 
