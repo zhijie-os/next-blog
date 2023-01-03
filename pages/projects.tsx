@@ -20,7 +20,7 @@ export default function Projects() {
 
         {/* map each project data to a project card */}
         <div className="container ">
-          <div className="m-4 flex flex-col divide-y divide-gray-200">
+          <div className="m-4 flex flex-col divide-y divide-gray-700">
             {ProjectData.map((p) => (
               <div key={p.title} className='py-4 flex jusitfy-center'>
                 <Project

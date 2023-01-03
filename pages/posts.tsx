@@ -20,7 +20,7 @@ export default function Posts({ allPostsData }: { allPostsData: any }) {
                     <h1 className="m-4 text-3xl font-extrabold leading- tracking-tight text-gray-900 dark:text-gray-100 sm:leading-10 md:text-4xl md:leading-14">
                         Blog
                     </h1>
-                    <div className="m-4 flex flex-col divide-y divide-gray-200">
+                    <div className="m-4 flex flex-col divide-y divide-gray-700">
                         {allPostsData.map(({ id, date, title }: { id: string, date: string, title: string }) => (
                             <li className="m-2 text-xl" key={id}>
                                 <Link href={`/posts/${id}`}>{title}</Link>
