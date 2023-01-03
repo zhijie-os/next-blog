@@ -4,6 +4,6 @@ date: '2022-12-29'
 ---
 # Hello World!
 
-Greetings! You are now visiting my newly redesigned personal developer blog, which was built using NextJS. The previous version of this blog was created using the MERN stack. My goal for this blog is to share my experiences and knowledge as a programmer and computer science student through posts about various technical topics.
+Hello and welcome to my newly redesigned personal developer blog! It was built using NextJS, and I decided to switch from the MERN stack in order to improve SEO and get better search engine rankings. As a programmer and computer science student, I want to use this blog to share my experiences and knowledge on various technical topics.
 
-Thank you for joining me on this journey as I share my thoughts and insights on the world of programming. Please stay tuned as the blog officially kicks off!
+Thank you for visiting and joining me on this journey. I look forward to sharing my thoughts and insights on the world of programming with you. Stay tuned for more updates as the blog officially gets underway!
