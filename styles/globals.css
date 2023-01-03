@@ -49,6 +49,11 @@ inline-code {
   @apply decoration-sky-500;
 } */
 
+.post a {
+  @apply underline;
+  @apply decoration-[#345A71];
+}
+
 .post p {
   @apply py-1;
 }
@@ -61,12 +66,12 @@ inline-code {
 
 .post h2 {
   @apply text-3xl;
-  @apply py-4;
+  @apply py-2;
   @apply font-bold;
 }
 
 .post h3 {
   @apply text-2xl;
-  @apply py-4;
+  @apply py-2;
   @apply font-bold;
 }

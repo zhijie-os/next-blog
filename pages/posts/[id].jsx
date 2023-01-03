@@ -33,10 +33,11 @@ export default function Post({ postData }) {
                                     showLineNumbers={true}
                                     showInlineLineNumbers={true} // <-- add this prop!
                                     wrapLines={true}
-                                    customStyle={{ width: "calc(100vw - 50px)" }}
+                                    customStyle={{ width: "calc(100vw - 50px)"}}
                                     style={nord}
                                     language={match[1]}
                                     PreTag="div"
+                                    className='max-w-4xl'
                                     {...props}
                                 >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
                             ) : (
