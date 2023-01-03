@@ -1,6 +1,6 @@
 import Project from "../components/project";
 import Layout from "../components/layout";
-
+import Head from "next/head";
 import { ProjectData } from "../data/projectData";
 
 
@@ -8,6 +8,10 @@ import { ProjectData } from "../data/projectData";
 export default function Projects() {
   return (
     <Layout home={false}>
+      <Head>
+        <title>Projects | Zhijie Xia</title>
+      </Head>
+
       <div className="max-w-4xl flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
           <h1 className="text-3xl font-extrabold leading- tracking-tight text-gray-900 dark:text-gray-100 sm:leading-10 md:text-4xl md:leading-14">

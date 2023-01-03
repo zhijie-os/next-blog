@@ -16,6 +16,7 @@ export default function Post({ postData }) {
         <Layout home={false}>
             <Head>
                 <title>{postData.title}</title>
+                <meta name="description" content={"Zhijie Xia at University of Calgary - Blog Posts - " + postData.title} />
             </Head>
             <article className="post max-w-4xl flex flex-col">
                 <h1 className={utilStyles.headingXl}>{postData.title}</h1>
@@ -39,9 +40,9 @@ export default function Post({ postData }) {
                                     {...props}
                                 >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
                             ) : (
-                                    <code className='bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
-                                        {children}
-                                    </code>
+                                <code className='bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
+                                    {children}
+                                </code>
                             )
                         }
                     }}>{postData.content}</ReactMarkdown>

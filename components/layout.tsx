@@ -16,7 +16,9 @@ export default function Layout({ children, home }: { children: any, home: any })
             <Head>
                 <link rel="icon" href="/robot.svg" />
                 <title>Zhijie Xia | UCalgary</title>
+                {/* for SEO */}
                 <meta name="description" content="Zhijie Xia at University of Calgary" />
+                <meta name="robots" content="all" />
                 {/* <meta property="og:image" content={``}></meta> */}
             </Head>
 
