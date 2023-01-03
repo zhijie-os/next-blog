@@ -12,18 +12,16 @@ import { nord } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
 // @ts-nocheck
 export default function Post({ postData }) {
-
     return (
         <Layout home={false}>
             <Head>
                 <title>{postData.title}</title>
             </Head>
-            <article className="max-w-4xl">
+            <article className="max-w-4xl flex flex-col">
                 <h1 className={utilStyles.headingXl}>{postData.title}</h1>
                 <div className={utilStyles.lightText}>
                     <Date dateString={postData.date} />
                 </div>
-
 
                 <ReactMarkdown
                     components={{
@@ -31,6 +29,10 @@ export default function Post({ postData }) {
                             const match = /language-(\w+)/.exec(className || '')
                             return !inline && match ? (
                                 <SyntaxHighlighter
+                                    showLineNumbers={true}
+                                    showInlineLineNumbers={true} // <-- add this prop!
+                                    wrapLines={true}
+                                    customStyle={{width:"calc(100vw - 50px)"}}
                                     style={nord}
                                     language={match[1]}
                                     PreTag="div"
