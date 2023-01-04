@@ -52,6 +52,7 @@ inline-code {
 .post em, strong {
   @apply text-slate-300;
   @apply font-bold;
+  @apply mx-1;
 }
 
 

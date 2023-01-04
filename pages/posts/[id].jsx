@@ -41,7 +41,7 @@ export default function Post({ postData }) {
                                     {...props}
                                 >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
                             ) : (
-                                <code className='bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
+                                <code className='mx-2 bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
                                     {children}
                                 </code>
                             )
