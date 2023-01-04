@@ -49,13 +49,23 @@ inline-code {
   @apply decoration-sky-500;
 } */
 
+.post em, strong {
+  @apply text-slate-300;
+  @apply font-bold;
+}
+
+
 .post a {
   @apply underline;
   @apply decoration-[#345A71];
 }
 
-.post p {
-  @apply py-1;
+.post h1,h2,h3,h4 {
+  @apply text-slate-300;
+}
+
+.post {
+  @apply text-gray-400;
 }
 
 .post h1 {
