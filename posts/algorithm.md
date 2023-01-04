@@ -8,7 +8,6 @@ In the past, I have tried to improve my algorithm skills but I didn't stick with
 
 
 # Leetcode
-
 ## 1480. Running sum of 1d Array
 
 - Difficulty: Easy
@@ -36,6 +35,48 @@ impl Solution {
         }
 
         results
+    }
+}
+~~~
+
+
+## 724. Find Pivot Index
+
+- Difficulty: Easy
+- Link: [724. Find Pivot Index](https://leetcode.com/problems/find-pivot-index/?envType=study-plan&id=level-1)
+
+### Description
+
+Given an array of integers `nums`, calculate the pivot index of this array.
+
+The pivot index is the index where the sum of all the numbers strictly to the left of the index is equal to the sum of all the numbers strictly to the index's right.
+
+If the index is on the left edge of the array, then the left sum is `0` because there are no elements to the left. This also applies to the right edge of the array.
+
+Return the leftmost pivot index. If no such index exists, return `-1`.
+
+### Solution
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~rust
+impl Solution {
+    pub fn pivot_index(nums: Vec<i32>) -> i32 {
+        // right = the total sum of the array at the beginning
+        let mut right:i32 = nums.iter().sum();
+        let mut left:i32 = 0;
+
+        // find the pivot by deciding if current is the pivot
+        for (i, x) in nums.iter().enumerate() {
+            right -= x;
+            if left == right {
+                return i as i32;
+            }
+            left += x;
+        }
+        // return -1 if no pivot
+        -1
     }
 }
 ~~~
