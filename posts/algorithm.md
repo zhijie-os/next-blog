@@ -95,3 +95,39 @@ Two strings `s` and `t` are isomorphic if the characters in s can be replaced to
 
 All occurrences of a character must be replaced with another character while preserving the order of characters. No two characters may map to the same character, but a character may map to itself.
 
+### Solution
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+
+
+~~~rust
+use std::collections::HashMap;
+
+impl Solution {
+    pub fn is_isomorphic(s: String, t: String) -> bool {
+        if s.len() != t.len() {
+            return false;
+        }
+        let mut s_map = HashMap::new();
+        let mut t_map = HashMap::new();
+        
+        for (i, (sc,tc)) in s.chars().zip(t.chars()).enumerate() {
+            // get the mapped char in t, or insert the associated char tc
+            let s_entry = s_map.entry(sc).or_insert(tc);
+            // get the mapped char in s, or insert the associated char sc
+            let t_entry = t_map.entry(tc).or_insert(sc);
+
+            // key point is that
+            //  no two chars mapped to same char, for both chars in s and t
+            // *s_entry != tc <=> sc is already mapped to another char that is not tc
+            // *t_entry != sc <=> tc is already mapped to another char that is not sc
+            if  *s_entry != tc || *t_entry != sc {
+                return false;
+            }
+        }
+        true
+    }
+}
+~~~
