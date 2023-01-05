@@ -3,8 +3,6 @@ import Layout from "../components/layout";
 import Head from "next/head";
 import { ProjectData } from "../data/projectData";
 
-
-
 export default function Projects() {
   return (
     <Layout home={false}>

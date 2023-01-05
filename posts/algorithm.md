@@ -8,6 +8,7 @@ In the past, I have tried to improve my algorithm skills but I didn't stick with
 
 
 # Leetcode
+
 ## 1480. Running sum of 1d Array
 
 - Difficulty: Easy

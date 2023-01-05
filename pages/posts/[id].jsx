@@ -5,7 +5,8 @@ import Date from '../../components/date'
 import utilStyles from '../../styles/utils.module.css'
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-// import remarkGfm from 'remark-gfm'
+import remarkGfm from 'remark-gfm'
+// import remarkToc from 'remark-toc';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { nord } from 'react-syntax-highlighter/dist/cjs/styles/prism'
@@ -25,6 +26,7 @@ export default function Post({ postData }) {
                 </div>
 
                 <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
                         code({ node, inline, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(className || '')
