@@ -102,7 +102,6 @@ All occurrences of a character must be replaced with another character while pre
 - Space: `O(n)`
 
 
-
 ~~~rust
 use std::collections::HashMap;
 
@@ -129,6 +128,52 @@ impl Solution {
             }
         }
         true
+    }
+}
+~~~
+
+
+## 392. Is Subsequence
+
+
+- Difficulty: Easy
+- Link: [392. Is Subsequence](https://leetcode.com/problems/is-subsequence/description/?envType=study-plan&id=level-1)
+
+
+### Description
+
+Given two strings `s` and `t`, return `true` if `s` is a subsequence of `t`, or `false` otherwise.
+
+A subsequence of a string is a new string that is formed from the original string by deleting some (can be none) of the characters without disturbing the relative positions of the remaining characters. (i.e., `"ace"` is a subsequence of `"abcde"` while `"aec"` is not).
+
+### Solution
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~rust
+use std::collections::HashMap;
+impl Solution {
+    pub fn is_subsequence(s: String, t: String) -> bool {
+        let mut s_iter = s.chars().peekable();
+        for c in t.chars() {
+            // early stop if s reaches the end before t is finished
+            if s_iter.peek().is_none() {
+                return true;
+            }
+            else if Some(c) == s_iter.peek().map(|x| *x) {
+                // advance s iterator
+                print!("{:?}",s_iter.peek().map(|x| *x));
+                s_iter.next();
+            }
+        }
+        
+        // check if s iterator reaches the end
+        if s_iter.peek().is_none() {
+            return true;
+        }
+
+        return false;
     }
 }
 ~~~
