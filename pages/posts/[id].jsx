@@ -27,7 +27,7 @@ export default function Post({ postData }) {
                     <Date dateString={postData.date} />
                 </div>
 
-                <div className="markdown-body max-w-4xl shrink-post rounded-2xl">
+                <div className="p-4 markdown-body max-w-4xl shrink-post rounded-2xl">
                     <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
