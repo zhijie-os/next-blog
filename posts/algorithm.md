@@ -177,3 +177,44 @@ impl Solution {
     }
 }
 ~~~
+
+## 21. Merge Two Sorted Lists
+
+- Difficulty: Easy
+- Link: [21. Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/?envType=study-plan&id=level-1)
+
+### Description
+
+You are given the heads of two sorted linked lists `list1` and `list2`.
+
+Merge the two lists in a one sorted list. The list should be made by splicing together the nodes of the first two lists.
+
+Return the head of the merged linked list.
+
+### Solution
+
+The algorithm is also called *Two Finger Algorithm*.
+
+~~~rust
+// Definition for singly-linked list.
+// #[derive(PartialEq, Eq, Clone, Debug)]
+// pub struct ListNode {
+//   pub val: i32,
+//   pub next: Option<Box<ListNode>>
+// }
+// 
+// impl ListNode {
+//   #[inline]
+//   fn new(val: i32) -> Self {
+//     ListNode {
+//       next: None,
+//       val
+//     }
+//   }
+// }
+impl Solution {
+    pub fn merge_two_lists(list1: Option<Box<ListNode>>, list2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        
+    }
+}
+~~~
