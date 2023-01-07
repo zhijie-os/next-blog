@@ -7,10 +7,12 @@ import Navbar from './navbar'
 import Footer from './footer'
 import LinkBar from './linkbar'
 
-const name = "Zhijie Xia"
+import ScrollTop from './scrollTop'
+
 export const siteTitle = "Zhijie Xia | UCalgary"
 
 export default function Layout({ children, home }: { children: any, home: any }) {
+    
     return (
         <div className="flex h-screen flex-col">
             <Head>
@@ -68,6 +70,10 @@ export default function Layout({ children, home }: { children: any, home: any })
             <main className='flex justify-center items-center p-16 mb-auto'>
                 {children}
             </main>
+
+            <ScrollTop></ScrollTop>
+
+
             {/* {!home && (
                 <div >
                     <Link href="/">← Back to home</Link>
