@@ -49,6 +49,10 @@ inline-code {
   @apply decoration-sky-500;
 } */
 
+.shrink-post {
+  width: calc(100vw - 50px);
+}
+
 .post em, strong {
   @apply text-slate-300;
   @apply font-bold;

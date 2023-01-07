@@ -6,6 +6,8 @@ import utilStyles from '../../styles/utils.module.css'
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
+import "github-markdown-css/github-markdown.css";
+
 // import remarkToc from 'remark-toc';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -19,13 +21,18 @@ export default function Post({ postData }) {
                 <title>{postData.title}</title>
                 <meta name="description" content={"Zhijie Xia at University of Calgary - Blog Posts - " + postData.title} />
             </Head>
-            <article className="post max-w-4xl flex flex-col">
+            <article className="max-w-4xl flex flex-col p-2">
+                
                 <h1 className={utilStyles.headingXl}>{postData.title}</h1>
                 <div className={utilStyles.lightText}>
                     <Date dateString={postData.date} />
                 </div>
 
-                <ReactMarkdown
+                <div className="markdown-body max-w-4xl shrink-post rounded-2xl">
+                    <ReactMarkdown>{postData.content}</ReactMarkdown>
+                </div>
+
+                {/* <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
                         code({ node, inline, className, children, ...props }) {
@@ -48,7 +55,7 @@ export default function Post({ postData }) {
                                 </code>
                             )
                         }
-                    }}>{postData.content}</ReactMarkdown>
+                    }}>{postData.content}</ReactMarkdown> */}
             </article>
         </Layout >
     )
