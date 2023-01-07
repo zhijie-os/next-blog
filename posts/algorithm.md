@@ -195,6 +195,9 @@ Return the head of the merged linked list.
 
 The algorithm is also called *Two Finger Algorithm*.
 
+- Runtime: `O(n)`
+- Space: `O(1)`
+
 ~~~rust
 // Definition for singly-linked list.
 // #[derive(PartialEq, Eq, Clone, Debug)]
@@ -214,7 +217,40 @@ The algorithm is also called *Two Finger Algorithm*.
 // }
 impl Solution {
     pub fn merge_two_lists(list1: Option<Box<ListNode>>, list2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
-        
+        let mut sentinel = Box::new(ListNode::new(0));
+        let mut current = &mut sentinel;
+        // redeclaring into mutable
+        let mut list1 = list1;
+        let mut list2 = list2;
+
+        // while if both linkedlist is not appended
+        while list1.is_some() || list2.is_some() {
+            if let (Some(ref box1), Some(ref box2)) = (list1.as_ref(), list2.as_ref()) {
+                // add the header of list 1
+                if box1.val < box2.val {
+                    // move to the current, current takes the ownship
+                    // note current is the Box type
+                    current.next = list1.take();
+                    // list1 = list1.next = the following ...
+                    list1 = current.next.as_mut().unwrap().next.take();
+                } else {
+                    current.next = list2.take();
+                    list2 = current.next.as_mut().unwrap().next.take();
+                }
+            }
+            else if list1.is_some() {
+                current.next = list1.take();
+                    // list1 = list1.next = the following ...
+                list1 = current.next.as_mut().unwrap().next.take();
+            } 
+            else {
+                current.next = list2.take();
+                list2 = current.next.as_mut().unwrap().next.take();
+            }
+
+            current = current.next.as_mut().unwrap();
+        } 
+        sentinel.next
     }
 }
 ~~~
