@@ -6,7 +6,7 @@ const headerNavLinks: { title: string; href: string }[] = [{ title: "HOME", href
 export default function Navbar() {
     return (
         <div className="flex justify-between">
-            <div className="mx-auto flex items-center p-4">
+            <div className="md:mx-auto flex items-center p-4">
                 <Link href="/"><Image 
                     src="/signature-white.svg" 
                     alt="logo" 
@@ -16,7 +16,7 @@ export default function Navbar() {
                 {/* <h1 className="text-3xl text-white">Keep Coding!</h1> */}
             </div>
 
-            <div className="mx-auto flex items-center text-base leading-5">
+            <div className="md:mx-auto flex items-center text-base leading-5">
                 <div className="hidden sm:block">
                     {headerNavLinks.map((link) => (
                         <Link

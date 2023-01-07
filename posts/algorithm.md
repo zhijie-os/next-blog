@@ -1,5 +1,5 @@
 ---
-title: 'Daily Algorithm: Leetcode in Rust'
+title: 'Daily Algorithm: Leetcode in Rust/C++'
 date: '2023-01-02'
 ---
 # Introduction
@@ -272,5 +272,78 @@ Given the head of a singly linked list, reverse the list, and return the reverse
 - Space: `O(1)`
 
 ~~~rust
-print!("Hello");
+// Definition for singly-linked list.
+// #[derive(PartialEq, Eq, Clone, Debug)]
+// pub struct ListNode {
+//   pub val: i32,
+//   pub next: Option<Box<ListNode>>
+// }
+// 
+// impl ListNode {
+//   #[inline]
+//   fn new(val: i32) -> Self {
+//     ListNode {
+//       next: None,
+//       val
+//     }
+//   }
+// }
+use std::mem;
+impl Solution {
+    pub fn reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        let mut reversed_list: Option<Box<ListNode>> = None;
+        let mut current_node = head;
+
+        while let Some(mut node) = current_node {
+            // replace next with none, but return the old next
+            current_node = mem::replace(&mut node.next, None);
+            // attached the reversed_list in the next
+            node.next = reversed_list;
+            // put node as header of th reversed_list
+            reversed_list = Some(node);
+        }
+        reversed_list
+    }
+}
 ~~~
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+// /**
+//  * Definition for singly-linked list.
+//  * struct ListNode {
+//  *     int val;
+//  *     ListNode *next;
+//  *     ListNode() : val(0), next(nullptr) {}
+//  *     ListNode(int x) : val(x), next(nullptr) {}
+//  *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+//  * };
+//  */
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(head==nullptr) {
+            return head;
+        }
+
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        ListNode* next = head->next;
+
+        while(next) {
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+            next = next->next;
+        }
+        curr->next = prev;
+        return curr;
+    }
+};
+~~~
+
+# Switching to C++
+
+I have to admit that Rust is a very difficult language for me and some of the functions in the standard library seem like magic to me. Coding algorithms in Rust has been distracting for me because I have to focus so much on the language itself. Therefore, for the rest of this blog, I will be using C++ instead.
