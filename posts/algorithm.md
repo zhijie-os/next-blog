@@ -254,3 +254,23 @@ impl Solution {
     }
 }
 ~~~
+
+
+## 206. Reverse Linked List
+
+- Difficulty: Easy
+- Link: [206. Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/?envType=study-plan&id=level-1)
+
+
+### Description
+
+Given the head of a singly linked list, reverse the list, and return the reversed list.
+
+### Solution
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~rust
+print!("Hello");
+~~~

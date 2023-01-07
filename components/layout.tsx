@@ -32,7 +32,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                             <div className="flex justify-center">
                                 <Image
                                     priority
-                                    src="/images/avatar.png"
+                                    src="/images/avatar.jpg"
                                     className="rounded-full"
                                     height={144}
                                     width={144}
