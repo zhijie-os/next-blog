@@ -22,40 +22,38 @@ export default function Post({ postData }) {
                 <meta name="description" content={"Zhijie Xia at University of Calgary - Blog Posts - " + postData.title} />
             </Head>
             <article className="max-w-4xl flex flex-col p-2">
-                
+
                 <h1 className={utilStyles.headingXl}>{postData.title}</h1>
                 <div className={utilStyles.lightText}>
                     <Date dateString={postData.date} />
                 </div>
 
                 <div className="markdown-body max-w-4xl shrink-post rounded-2xl">
-                    <ReactMarkdown>{postData.content}</ReactMarkdown>
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                            code({ node, inline, className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return !inline && match ? (
+                                    <SyntaxHighlighter
+                                        showLineNumbers={true}
+                                        showInlineLineNumbers={true} // <-- add this prop!
+                                        wrapLines={true}
+                                        // customStyle={{ width: "calc(100vw - 100px)" }}
+                                        style={nord}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        // className='max-w-4xl p-4'
+                                        {...props}
+                                    >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
+                                ) : (
+                                    <code className='mx-2 bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
+                                        {children}
+                                    </code>
+                                )
+                            }
+                        }}>{postData.content}</ReactMarkdown>
                 </div>
-
-                {/* <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                        code({ node, inline, className, children, ...props }) {
-                            const match = /language-(\w+)/.exec(className || '')
-                            return !inline && match ? (
-                                <SyntaxHighlighter
-                                    showLineNumbers={true}
-                                    showInlineLineNumbers={true} // <-- add this prop!
-                                    wrapLines={true}
-                                    customStyle={{ width: "calc(100vw - 50px)"}}
-                                    style={nord}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    className='max-w-4xl'
-                                    {...props}
-                                >{String(children).replace(/\n$/, '')}</SyntaxHighlighter>
-                            ) : (
-                                <code className='mx-2 bg-gray-700 bg-opacity-50 text-sky-700 underline decoration-sky-500 rounded-md' {...props}>
-                                    {children}
-                                </code>
-                            )
-                        }
-                    }}>{postData.content}</ReactMarkdown> */}
             </article>
         </Layout >
     )
