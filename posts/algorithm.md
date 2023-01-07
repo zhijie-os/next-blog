@@ -347,3 +347,52 @@ public:
 # Switching to C++
 
 I have to admit that Rust is a very difficult language for me and some of the functions in the standard library seem like magic to me. Coding algorithms in Rust has been distracting for me because I have to focus so much on the language itself. Therefore, for the rest of this blog, I will be using C++ instead.
+
+
+## 876. Middle of the Linked List
+
+- Difficulty: Easy
+- Link: [876. Middle of the Linked List](https://leetcode.com/problems/middle-of-the-linked-list/?envType=study-plan&id=level-1)
+
+### Description
+
+Given the `head` of a singly linked list, return the middle node of the linked list.
+
+If there are two middle nodes, return *the second middle* node.
+
+### Solution
+
+The easiest way is to count the number of nodes in the linked list and reiterate the linked list from the head. However, this takes two passes through the same linked list. A better solution takes one pass. We need to use two pointers, one is faster, one is slower. When the faster one reaches the end, the slower one reaches the middle of the linked list.
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+
+~~~cpp
+// /**
+//  * Definition for singly-linked list.
+//  * struct ListNode {
+//  *     int val;
+//  *     ListNode *next;
+//  *     ListNode() : val(0), next(nullptr) {}
+//  *     ListNode(int x) : val(x), next(nullptr) {}
+//  *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+//  * };
+//  */
+class Solution {
+public:
+    ListNode* middleNode(ListNode* head) {
+        ListNode *fast, *slow = head;
+
+        while (fast->next!=nullptr) {
+            slow = slow->next;
+            // if there is even length of nodes
+            if (fast->next->next == nullptr) {
+                break;
+            }
+            fast = fast->next->next;
+        }
+        return slow;
+    }
+};
+~~~
