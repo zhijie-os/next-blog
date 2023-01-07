@@ -14,7 +14,7 @@ export default function Home() {
             <h1 className="text-4xl py-2 font-bold">
               <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
             </h1>
-            <p className="py-4">
+            <p className="py-4 text-center">
               As a student majors in Computer Science at
               University of Calgary, Zhijie received multiple scholarships
               and awards for his
@@ -27,7 +27,7 @@ export default function Home() {
               FOSS projects to contribute.
             </p>
 
-            <p className="py-4">
+            <p className="py-4 text-center">
               As a researcher,
               Zhijie&rsquo;
               research interests are System

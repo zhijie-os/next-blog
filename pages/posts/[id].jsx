@@ -2,7 +2,6 @@ import Layout from '../../components/layout'
 import { getAllPostIds, getPostData } from '../../lib/posts'
 import Head from 'next/head'
 import Date from '../../components/date'
-import utilStyles from '../../styles/utils.module.css'
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
@@ -23,8 +22,8 @@ export default function Post({ postData }) {
             </Head>
             <article className="max-w-4xl flex flex-col p-2">
 
-                <h1 className={utilStyles.headingXl}>{postData.title}</h1>
-                <div className={utilStyles.lightText}>
+                <h1 className="text-4xl font-bold text-center">{postData.title}</h1>
+                <div className="text-gray-500 pb-4 text-center">
                     <Date dateString={postData.date} />
                 </div>
 
