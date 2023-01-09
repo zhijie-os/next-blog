@@ -4,13 +4,18 @@ import styles from '../styles/Home.module.css'
 import Link from 'next/link'
 import Layout from '../components/layout'
 // import utilStyles from '../styles/utils.module.css';
+import Timeline from '../components/timeline'
+
 export default function Home() {
   return (
     <Layout home={true}>
+
+
+
       {/* layout header still work, this adds to the layout header */}
       <div className="w-full text-center">
-        <div className="max-w-4xl w-full mx-auto p-2 flex justify-center items-center">
-          <div>
+        <div className="max-w-4xl w-full mx-auto p-2 flex flex-col md:flex-row justify-center items-center">
+          <div className="flex flex-col mx-auto">
             <h1 className="text-4xl py-2 font-bold">
               <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
             </h1>
@@ -43,6 +48,8 @@ export default function Home() {
               he submitted the system to ACM SIGCHI 2023 as leading author.
             </p>
           </div>
+
+          <Timeline></Timeline>
         </div>
       </div>
     </Layout>

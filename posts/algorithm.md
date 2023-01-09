@@ -414,6 +414,9 @@ There is a cycle in a linked list if there is some node in the list that can be 
 
 Similar idea to the last question - Middle of the linked list, we need a fast pointer and a slow pointer. When the fast pointer catches the slow pointer, there is a cycle. However, finding and returning the exact entry node of the cycle is non-trivial. The algorithm is called `Floyd Algorithm` and it is Okay if one spend one hour just to understand it. Remeber,when you are tackling this problem you are as  creative as Floyd was solving the exact same problem.
 
+- Runtime: `O(n)` <=> algorithm stops when `slow` pointer reaches the entry of the loop
+- Space: `O(1)` <=> three pointers
+
 ~~~cpp
 /**
  * Definition for singly-linked list.
@@ -455,3 +458,19 @@ public:
     }
 };
 ~~~
+
+## 121. Best Time to Buy and Sell Stock
+
+- Difficulty: Easy
+- Link: [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/?envType=study-plan&id=level-1)
+
+### Description
+
+You are given an array `prices` where `prices[i]` is the price of a given stock on the `ith` day.
+
+You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
+
+Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return `0`.
+
+
+### Solution 
