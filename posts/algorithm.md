@@ -396,3 +396,62 @@ public:
     }
 };
 ~~~
+
+## 142. Linked List Cycle II
+
+- Difficulty: Medium
+- Link: [142. Linked List Cycle II](https://leetcode.com/problems/linked-list-cycle-ii/?envType=study-plan&id=level-1)
+
+### Description
+
+Given the `head` of a linked list, return the node where the cycle begins. If there is no cycle, return `null`.
+
+There is a cycle in a linked list if there is some node in the list that can be reached again by continuously following the `next` pointer. Internally, pos is used to denote the index of the node that tail's `next` pointer is connected to (0-indexed). It is `-1` if there is no cycle. Note that `pos` is not passed as a parameter.
+
+*Do not modify the linked list.*
+
+### Solution
+
+Similar idea to the last question - Middle of the linked list, we need a fast pointer and a slow pointer. When the fast pointer catches the slow pointer, there is a cycle. However, finding and returning the exact entry node of the cycle is non-trivial. The algorithm is called `Floyd Algorithm` and it is Okay if one spend one hour just to understand it. Remeber,when you are tackling this problem you are as  creative as Floyd was solving the exact same problem.
+
+~~~cpp
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        // trivial
+        if(!head||!head->next){
+            return nullptr;
+        }
+        ListNode *slow = head;
+        ListNode *fast = head;
+        ListNode *entry = head;
+
+        // slow is slower than fast, so we break the eloop when fast reaches the end
+        while(fast->next&&fast->next->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+            // slow and fast meets => there is a loop 
+            if(slow == fast) {
+                // need to find the entry point of the loop;
+                // distance from head to the node = distance from the meet point to the node(forward direction)
+                while(entry!=slow) {
+                    entry = entry->next;
+                    slow = slow->next;
+                }
+                return entry;
+            }
+        }
+
+        // no loop
+        return nullptr;
+    }
+};
+~~~
