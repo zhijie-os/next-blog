@@ -474,3 +474,34 @@ Return the maximum profit you can achieve from this transaction. If you cannot a
 
 
 ### Solution 
+
+We want to buy low and sell high. We keep two pointers, one is for identify the low, and the other one is to identify the high. Ask ourselves one question "You currently have low and high, how can you improve the profit?" => new low, and new high. 
+
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int max = 0;
+        int low = prices[0];
+        int high = prices[0];
+        
+        for(int i:prices){
+            if(i > high){
+                high = i;
+                if(high-low > max)
+                    max = high - low;
+            }
+            else if (i<low){
+                // need to reset high, since we cannot sell on previous dates
+                low = high = i;
+            }
+        }
+        
+        return max;
+    }
+};
+~~~
