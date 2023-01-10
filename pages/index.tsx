@@ -49,7 +49,7 @@ export default function Home() {
             </p>
           </div>
 
-          <Timeline></Timeline>
+          {/* <Timeline></Timeline>  */}
         </div>
       </div>
     </Layout>
