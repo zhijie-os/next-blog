@@ -505,3 +505,60 @@ public:
     }
 };
 ~~~
+
+
+## 409. Longest Palindrome
+
+- Difficulty: Easy
+- Link: [409. Longest Palindrome](https://leetcode.com/problems/longest-palindrome/?envType=study-plan&id=level-1)
+
+### Description
+
+Given `a` string s which consists of lowercase or uppercase letters, return the length of the longest palindrome that can be built with those letters.
+
+Letters are case sensitive, for example, `"Aa"` is not considered a palindrome here.
+
+An example is
+```
+Input: s = "abccccdd"
+Output: 7
+Explanation: One longest palindrome that can be built is "dccaccd", whose length is 7.
+```
+
+
+
+### Solution
+
+The order of the characters in the string does not matter, you can construct your own palindrome with existing characters.
+Thus, the answer is a simple greedy algorithm. The intuition is 
+to add two same character to the palindrome whenever encountered.
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+~~~cpp
+class Solution {
+public:
+    int longestPalindrome(string s) {
+        unordered_set<char> set;
+        int result = 0;
+        //  add two same character to the palindrome whenever encountered
+        for(char i : s){
+            if(set.find(i) != set.end()){
+                set.erase(i);
+                result += 2;
+            }
+            else{
+                set.insert(i);
+            }
+        }
+
+        // If we have a spare, unique character at our disposal, we can insert it in the middle of our palindrome to create a new one.
+        if(!set.empty()){
+            result += 1;
+        }
+
+        return result;
+    }
+};
+~~~
