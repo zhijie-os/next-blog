@@ -562,3 +562,63 @@ public:
     }
 };
 ~~~
+
+
+# 589. N-ary Tree Preorder Traversal
+
+- Difficulty: Easy
+- Link: [589. N-ary Tree Preorder Traversal](https://leetcode.com/problems/n-ary-tree-preorder-traversal/?envType=study-plan&id=level-1)
+
+### Description
+
+Given the `root` of an n-ary tree, return the preorder traversal of its nodes' values.
+
+Nary-Tree input serialization is represented in their level order traversal. Each group of children is separated by the null value (See examples)
+
+
+### Solution
+
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    vector<Node*> children;
+
+    Node() {}
+
+    Node(int _val) {
+        val = _val;
+    }
+
+    Node(int _val, vector<Node*> _children) {
+        val = _val;
+        children = _children;
+    }
+};
+*/
+
+class Solution {
+public:
+    vector<int> preorder(Node* root) {
+        vector<int> result;
+        preorder_traverse(root, result);
+        return result;
+    }
+    
+    void preorder_traverse(Node* node, vector<int> &result){
+        if(!node){
+            return;
+        }
+        result.push_back(node->val);
+        for(auto child:node->children){
+            preorder_traverse(child,result);
+        }
+    }
+};
+~~~
