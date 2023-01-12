@@ -622,3 +622,34 @@ public:
     }
 };
 ~~~
+
+An interative solution is
+~~~cpp
+class Solution {
+public:
+    vector<int> preorder(Node* root) {
+        if(!root){
+            return {};
+        }
+        
+        vector<int> result;
+        stack<Node *> nodes;
+        nodes.push(root);
+        
+        Node* curr;
+        while(!nodes.empty()){
+            curr = nodes.top();
+            nodes.pop();
+            result.push_back(curr->val);
+            
+            for(int i=curr->children.size()-1 ;i>=0;i--){
+                nodes.push(curr->children[i]);
+            }
+            
+        }
+        
+        return result;
+    }
+
+};
+~~~
