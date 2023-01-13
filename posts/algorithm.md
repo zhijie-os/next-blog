@@ -653,3 +653,69 @@ public:
 
 };
 ~~~
+
+
+
+
+# 102. Binary Tree Level Order Traversal
+
+- Difficulty: Medium
+- Link: [102. Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal/?envType=study-plan&id=level-1)
+
+### Description
+
+Given the `root` of a binary tree, return the level order traversal of its nodes' values. (i.e., from left to right, level by level).
+
+### Solution
+
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+~~~cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        if(!root) {
+            return {};
+        }
+        
+        vector<vector<int>> result;
+        vector<TreeNode *> levelNodes;
+        levelNodes.push_back(root);
+
+        while (!levelNodes.empty()) {
+            int currentLevelSize = levelNodes.size();
+            vector<int> currentLevelVals;
+            for(int i=0; i< currentLevelSize; i++){
+                // get the val into 
+                currentLevelVals.push_back(levelNodes[i]->val);
+                // push left to next level
+                if(levelNodes[i]->left){
+                    levelNodes.push_back(levelNodes[i]->left);
+                }
+                // push right to next level
+                if(levelNodes[i]->right){
+                    levelNodes.push_back(levelNodes[i]->right);
+                }
+            }
+            // erase last level nodes
+            levelNodes.erase(levelNodes.begin(),levelNodes.begin()+currentLevelSize);
+            result.push_back(currentLevelVals);
+        }
+
+        return result;
+    }
+};
+~~~
