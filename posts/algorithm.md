@@ -564,7 +564,7 @@ public:
 ~~~
 
 
-# 589. N-ary Tree Preorder Traversal
+## 589. N-ary Tree Preorder Traversal
 
 - Difficulty: Easy
 - Link: [589. N-ary Tree Preorder Traversal](https://leetcode.com/problems/n-ary-tree-preorder-traversal/?envType=study-plan&id=level-1)
@@ -657,7 +657,7 @@ public:
 
 
 
-# 102. Binary Tree Level Order Traversal
+## 102. Binary Tree Level Order Traversal
 
 - Difficulty: Medium
 - Link: [102. Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal/?envType=study-plan&id=level-1)
@@ -716,6 +716,50 @@ public:
         }
 
         return result;
+    }
+};
+~~~
+
+
+
+## 102. Binary Tree Level Order Traversal
+
+- Difficulty: Easy
+- Link: [704. Binary Search](https://leetcode.com/problems/binary-search/?envType=study-plan&id=level-1)
+
+### Description
+
+Given an array of integers `nums` which is sorted in ascending order, and an integer `target`, write a function to search `target` in `nums`. If `target` exists, then return its index. Otherwise, return `-1`.
+
+You must write an algorithm with `O(log n)` runtime complexity.
+
+### Solution
+ 
+
+- Runtime: `O(nlgn)`
+- Space: `O(1)`
+
+~~~cpp
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int left = 0;
+        int right = nums.size()-1;
+
+        while(left <= right) {
+            int mid = (left+right)/2;
+            if(nums[mid] == target){
+                return mid;
+            } 
+            else if (nums[mid] > target){ // look at the left side
+                right = mid - 1;
+            }
+            else { // look at right side
+                left = mid + 1;
+            }
+        }
+
+        return -1;
     }
 };
 ~~~
