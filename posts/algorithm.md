@@ -736,7 +736,7 @@ You must write an algorithm with `O(log n)` runtime complexity.
 ### Solution
  
 
-- Runtime: `O(nlgn)`
+- Runtime: `O(lgn)`
 - Space: `O(1)`
 
 ~~~cpp
@@ -782,7 +782,7 @@ You are given an API `bool isBadVersion(version)` which returns whether `version
 ### Solution
  
 
-- Runtime: `O(nlgn)`
+- Runtime: `O(lgn)`
 - Space: `O(1)`
 
 ~~~cpp
@@ -812,4 +812,99 @@ public:
         return -1;
     }
 };
+~~~
+
+
+## 98. Validate Binary Search Tree
+
+
+### Description 
+
+Given the `root` of a binary tree, determine if it is a valid binary search tree (BST).
+
+A *valid BST* is defined as follows:
+
+- The left subtree of a node contains only nodes with keys less than the node's key.
+- The right subtree of a node contains only nodes with keys greater than the node's key.
+- Both the left and right subtrees must also be binary search trees.
+
+### Solution
+
+This algorithm relies on the fact that inorder traversal of a valid binary search tree is in `increasing`(in some other problems, `non-decreasing`) order
+
+- Runtime: `O(lgn)`
+- Space: `O(1)`
+
+~~~cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        if(!root)
+        {
+            return true;
+        }
+        // DFS - stack, BFS - queue
+        std::vector<TreeNode *> stack;
+        TreeNode *pre = nullptr;
+
+        while(root||!stack.empty())
+        {
+            while(root)
+            {
+                // put all the in-node in the stack
+                stack.push_back(root);
+
+                // all the way to the most left
+                root = root->left;
+            }
+            // go up
+            root = stack.back();
+            stack.pop_back();
+            
+            // check if bigger than the previous node
+            if(pre && root->val <= pre->val)
+            {
+                return false;
+            }
+            // update previous
+            pre = root;
+            // go right branch
+            root = root->right;
+        }
+        return true;
+    }
+};
+~~~
+
+
+A fancy way to do [inorder traversal](https://leetcode.com/problems/validate-binary-search-tree/discuss/32112/Learn-one-iterative-inorder-traversal-apply-it-to-multiple-tree-questions-(Java-Solution)).
+
+~~~java
+public List<Integer> inorderTraversal(TreeNode root) {
+    List<Integer> list = new ArrayList<>();
+    if(root == null) return list;
+    Stack<TreeNode> stack = new Stack<>();
+    while(root != null || !stack.empty()){
+        while(root != null){
+            stack.push(root);
+            root = root.left;
+        }
+        root = stack.pop();
+        list.add(root.val);
+        root = root.right;
+        
+    }
+    return list;
+}
 ~~~
