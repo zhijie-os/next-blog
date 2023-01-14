@@ -1,6 +1,6 @@
 ---
 title: 'Daily Algorithm: Leetcode in Rust/C++'
-date: '2023-01-02'
+date: '2023-01-13'
 ---
 # Introduction
 
@@ -957,6 +957,192 @@ public:
         else{
             return lowestCommonAncestor(root->right, p, q);
         }
+    }
+};
+~~~
+
+
+## 733. Flood Fill
+
+- Difficulty: Easy
+- Link: [733. Flood Fill](https://leetcode.com/problems/flood-fill/?envType=study-plan&id=level-1)
+
+### Description
+
+An image is represented by an `m x n` integer grid `image` where image[i][j] represents the pixel value of the image.
+
+You are also given three integers sr, sc, and color. You should perform a flood fill on the image starting from the pixel image[sr][sc].
+
+To perform a flood fill, consider the starting pixel, plus any pixels connected 4-directionally to the starting pixel of the same color as the starting pixel, plus any pixels connected 4-directionally to those pixels (also with the same color), and so on. Replace the color of all of the aforementioned pixels with color.
+
+Return the modified image after performing the flood fill.
+
+### Solution
+
+- Runtime: `O(mn)`
+- Space: `O(1)`
+
+This algorithm also teaches how to traverse a 2d array with DFS.
+
+~~~cpp
+class Solution {
+public:
+    void dfs(vector<vector<int>> &image, int i, int j, int val, int newColor){
+        // 1.check if the [i][j] is inside the 2d array
+        // 2. check if already the color
+        // 3. check if the old color is same
+        if(i<0 || i>=image.size() || j<0 || j>= image[0].size() || image[i][j] == newColor || image[i][j] != val)
+        {
+            return;
+        }
+        // populated adjacent water
+        image[i][j] = newColor;
+        // populate/flood four directions
+        dfs(image, i-1, j, val, newColor);
+        dfs(image, i+1, j, val, newColor);
+        dfs(image, i, j-1, val, newColor);
+        dfs(image, i, j+1, val, newColor);
+    }
+    
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc, int color) {
+        dfs(image, sr, sc, image[sr][sc], color);
+        return image;
+    }
+};
+~~~
+
+
+## 200. Number of Islands
+
+- Difficulty: Medium
+- Link: [200. Number of Islands](https://leetcode.com/problems/number-of-islands/?envType=study-plan&id=level-1)
+
+
+### Description 
+
+Given an `m x n` 2D binary grid `grid` which represents a map of `'1'`s (land) and `'0'`s (water), return the number of islands.
+
+An island is *surrounded* by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are all surrounded by water.
+
+
+### Solution
+
+- Runtime: `O(mn)`
+- Space: `O(1)`
+
+This algorithm also teaches how to traverse a 2d array with DFS.
+
+~~~cpp
+class Solution {
+public:
+    void dfs(vector<vector<char>>&grid, int i, int j){
+        // outbound
+        if(i < 0 || i>= grid.size() || j < 0 || j>=grid[0].size()){ // note, it is grid[0].size() for the number of columns
+            return;
+        }
+        // the cell is already counted(#) or it is water (0)
+        if(grid[i][j]!='1'){
+            return;
+        }
+        
+        // mark the island as counted
+        grid[i][j]='#';
+        
+        dfs(grid, i-1, j);
+        dfs(grid, i+1, j);
+        dfs(grid, i, j-1);
+        dfs(grid, i, j+1);
+    }
+    
+    int numIslands(vector<vector<char>>& grid) {
+        int islands = 0;
+        
+        for(int i=0; i<grid.size(); i++){
+            for(int j=0; j<grid[0].size(); j++){
+                // when find a island
+                if(grid[i][j]=='1'){
+                    islands++;
+                    // use dfs to mark the entire island as counted.
+                    dfs(grid, i, j);
+                }
+            }
+        }
+        
+        return islands;
+    }
+};
+~~~
+
+## 509. Fibonacci Number
+
+- Difficulty: Easy
+- Link: [509. Fibonacci Number](https://leetcode.com/problems/fibonacci-number/?envType=study-plan&id=level-1)
+
+
+### Description 
+
+The *Fibonacci numbers*, commonly denoted `F(n)` form a sequence, called the *Fibonacci sequence*, such that each number is the sum of the two preceding ones, starting from `0` and `1`.
+
+### Solution
+
+- Runtime: `O(mn)`
+- Space: `O(1)`
+
+~~~cpp
+// a dynamic programming solution
+class Solution {
+public:
+    int fib(int n) {
+        if( n<=1 ){
+            return n;
+        }
+        
+        vector<int> table(n+1);
+        table[0] = 0;
+        table[1] = 1;
+        for(int i=2; i<table.size(); i++){
+            // fib(n) = fib(n-1) + fib(n-2)
+            table[i] = table[i-1] + table[i-2];
+        }
+        
+        return table[n];
+    }
+};
+~~~
+
+## 70. Climbing Stairs
+
+- Difficulty: Easy
+- Link: [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/?envType=study-plan&id=level-1)
+
+### Description 
+
+You are climbing a staircase. It takes `n` steps to reach the top.
+
+Each time you can either climb `1` or `2` steps. In how many distinct ways can you climb to the top?
+
+### Solution
+
+~~~cpp
+class Solution {
+public:
+    int climbStairs(int n) {
+        if (n<2){
+            return 1;
+        }else if(n==2){
+            return 2;
+        }
+        // subproblem <=> how many ways to reach top from top-i
+        vector<int> table(n+1);
+        // ahh.. table[0] is a dummy
+        table[0] = table[1] = 1;
+        table[2] = 2;
+        for(int i=3; i<table.size(); i++){
+            // either make 1 step or 2 steps
+            table[i] = table[i-1] + table[i-2]; 
+        }
+        // top-n is the starting
+        return table[n];
     }
 };
 ~~~
