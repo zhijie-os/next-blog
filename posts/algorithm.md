@@ -1085,8 +1085,8 @@ The *Fibonacci numbers*, commonly denoted `F(n)` form a sequence, called the *Fi
 
 ### Solution
 
-- Runtime: `O(mn)`
-- Space: `O(1)`
+- Runtime: `O(n)`
+- Space: `O(n)`
 
 ~~~cpp
 // a dynamic programming solution
@@ -1123,6 +1123,9 @@ Each time you can either climb `1` or `2` steps. In how many distinct ways can y
 
 ### Solution
 
+- Runtime: `O(n)`
+- Space: `O(n)`
+
 ~~~cpp
 class Solution {
 public:
@@ -1146,3 +1149,51 @@ public:
     }
 };
 ~~~
+
+## 746. Min Cost Climbing Stairs
+
+- Difficulty: Easy
+- Link: [746. Min Cost Climbing Stairs](https://leetcode.com/problems/min-cost-climbing-stairs/?envType=study-plan&id=level-1)
+
+### Description
+
+You are given an integer array `cost` where `cost[i]` is the cost of `ith` step on a staircase. Once you pay the cost, you can either climb one or two steps.
+
+You can either start from the step with index `0`, or the step with index `1`.
+
+Return the minimum cost to reach the top of the floor.
+
+### Solution
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+~~~cpp
+class Solution {
+public:
+    int minCostClimbingStairs(vector<int>& cost) {
+
+        int n = cost.size();
+        
+        // think backwards, table[i] = the cost of climbing to top from top-i-1... stair
+        vector<int> table(n);
+        // reaches the top from top-1
+        table[0] = cost[cost.size()-1];
+        // reaches the top from top-2
+        table[1] = cost[cost.size()-2];
+        
+        for(int i=2; i<table.size(); i++)
+        {
+            // either make 1 step or 2 steps
+            int oneStep = cost[cost.size()-i-1]+table[i-1];
+            int twoStep = cost[cost.size()-i-1]+table[i-2];
+            // plus current stair's cost
+            table[i] = min(oneStep,twoStep);
+        }
+
+        // the first step is either 1st stair, or 2nd stair
+        return min(table[n-1],table[n-2]);
+    }
+};
+~~~
+
