@@ -1197,3 +1197,48 @@ public:
 };
 ~~~
 
+
+## 62. Unique Paths
+
+- Difficulty: Medium
+- Link: [62. Unique Paths](https://leetcode.com/problems/unique-paths/)
+
+### Description
+
+There is a robot on an `m x n` grid. The robot is initially located at the top-left corner (i.e., `grid[0][0]`). The robot tries to move to the bottom-right corner (i.e., `grid[m - 1][n - 1]`). The robot can only move either down or right at any point in time.
+
+Given the two integers `m` and `n`, return the number of possible unique paths that the robot can take to reach the bottom-right corner.
+
+### Solution
+
+- Runtime: `O(mn)`
+- Space: `O(mn)`
+
+~~~cpp
+class Solution {
+public:
+
+    
+    int uniquePaths(int m, int n) {
+        vector<vector<int>> table(m, vector<int>(n));
+        // base cases
+        // can only go down
+        for(int i=0; i< m; i++){
+            table[i][n-1] = 1;
+        }
+        // can only go right
+        for(int i=0; i<n; i++){
+            table[m-1][i] = 1;
+        }
+        
+        for(int i=m-2; i>=0 ; i--){
+            for(int j=n-2; j>=0; j--){
+                // either go down or right
+                table[i][j] = table[i+1][j] + table[i][j+1];
+            }
+        }
+        
+        return table[0][0];
+    }
+};
+~~~
