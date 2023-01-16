@@ -1355,3 +1355,107 @@ public:
     }
 };
 ~~~
+
+
+
+## 1. Two Sum
+
+- Difficulty: Easy
+- Link: [1. Two Sum](https://leetcode.com/problems/two-sum/?envType=study-plan&id=level-1)
+
+
+### Description 
+
+Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.
+
+You may assume that each input would have *exactly one solution*, and you may not use the same element twice.
+
+You can return the answer in any order.
+
+### Solution
+
+This question can also be solved by two pointers if the `nums` are ordered.
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+~~~cpp
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> occurrence;
+
+        for(int i=0 ; i< nums.size(); i++){
+            if(occurrence.find(target - nums[i])!=occurrence.end()){
+                return {occurrence[target - nums[i]], i};
+            }
+            else {
+                occurrence[nums[i]] = i;
+            }
+        }
+
+        return {};
+    }
+};
+~~~
+
+
+## 299. Bulls and Cows
+
+- Difficulty: Medium
+- Link: [299. Bulls and Cows](https://leetcode.com/problems/bulls-and-cows/?envType=study-plan&id=level-1)
+
+### Description 
+
+You are playing the *Bulls and Cows* game with your friend.
+
+You write down a secret number and ask your friend to guess what the number is. When your friend makes a guess, you provide a hint with the following info:
+
+    The number of "bulls", which are digits in the guess that are in the correct position.
+    The number of "cows", which are digits in the guess that are in your secret number but are located in the wrong position. Specifically, the non-bull digits in the guess that could be rearranged such that they become bulls.
+
+Given the secret number `secret` and your friend's guess `guess`, return the hint for your friend's guess.
+
+The hint should be formatted as `"xAyB"`, where `x` is the number of bulls and `y` is the number of cows. Note that both `secret` and `guess` may contain duplicate digits.
+
+
+### Solution
+
+
+- Runtime: `O(n)`
+- Space: `O(n)`
+
+~~~cpp
+class Solution {
+public:
+    string getHint(string secret, string guess) {
+        unordered_map<char, int> occurrence;
+        
+        // count the characters in the hashmap
+        for(char &c : guess){
+            occurrence[c]++;
+        }
+        
+        // count the number of bulls, priv(bull) > priv(cow)
+        int bull = 0;
+        for(int i=0; i<secret.size(); i++){
+            if (secret[i]==guess[i]){
+                bull ++;
+                occurrence[guess[i]]--;
+            }
+        }
+        
+        // count the number of cow
+        int cow = 0;
+        for(int i=0; i<secret.size(); i++){
+            if (secret[i]!=guess[i]){
+                if (occurrence[secret[i]]>0){
+                    occurrence[secret[i]]--;
+                    cow++;
+                }
+            }
+        }
+        return to_string(bull)+"A"+to_string(cow)+"B";
+    }
+};
+~~~
