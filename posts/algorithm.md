@@ -1300,3 +1300,58 @@ public:
     }
 };
 ~~~
+
+
+
+## 424. Longest Repeating Character Replacement
+
+- Difficulty: Medium
+- Link: [424. Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement/)
+
+
+### Description 
+
+You are given a string `s` and an integer `k`. You can choose any character of the string and change it to any other uppercase English character. You can perform this operation at most `k` times.
+
+Return the length of the longest substring containing the same letter you can get after performing the above operations.
+
+
+### Solution 
+
+Keep a window squeezed by `left` and `right`. For each window instance, find the most frequent char and its frequency. Check if the window size(number of character in the substring) can be filled by the most frequent char with k replacement. If so, enlarge `right`
+and update the maximum length; otherwise, shift left and seek new window instances starting from `left+1`.
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+class Solution {
+public:
+    int characterReplacement(string s, int k) {
+        vector<int> count(26,0);
+        
+        int left = 0;
+        int mostFrequentCount = 0;
+        int maxLength = 0;
+        
+        for(int right = 0; right < s.length(); right ++ ){
+           // new char in the window
+           count[s[right]-'A']++;
+           // update the most frequent count if necessary
+           mostFrequentCount = max(mostFrequentCount, count[s[right]-'A']);
+           if(right - left + 1 - mostFrequentCount - k <= 0) {
+               maxLength = right - left + 1;
+           }
+           else {
+               // not enough replacement, shift the window to right
+               count[s[left]-'A']--;
+               left ++;
+           }
+           
+        }
+
+        return maxLength;
+        
+    }
+};
+~~~
