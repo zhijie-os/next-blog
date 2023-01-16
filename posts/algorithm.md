@@ -1242,3 +1242,61 @@ public:
     }
 };
 ~~~
+
+
+## 438. Find All Anagrams in a String
+
+- Difficulty: Medium
+- Link: [438. Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string/?envType=study-plan&id=level-1)
+
+
+### Description 
+
+Given two strings `s` and `p`, return an array of all the start indices of `p`'s anagrams in `s`. You may return the answer in *any order*.
+
+An *Anagram* is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.
+
+
+
+### Solution 
+
+
+
+- Runtime: `O(n)`: Note `n` is the size of `s`.
+- Space: `O(1)`: `pChars` and `wChars` are only 26-ints constant size. 
+
+~~~cpp
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        if(p.size()>s.size()){
+            return {};
+        }
+        
+        vector<int> pChars(26, 0);
+        vector<int> wChars(26, 0);
+        vector<int> result;
+        
+        for(int i=0; i<p.size(); i++)
+        {
+            pChars[p[i]-'a']++;
+            wChars[s[i]-'a']++;
+        }
+        
+        if(pChars==wChars){
+                result.push_back(0);
+        }
+        
+        for(int i=p.size(); i<s.size(); i++){
+            // add new char into window 
+            wChars[s[i]-'a']++;
+            // delete last char on the left side of the window
+            wChars[s[i-p.size()]-'a']--;
+            if(pChars==wChars){
+                result.push_back(i-p.size()+1);
+            }
+        }
+        return result;
+    }
+};
+~~~
