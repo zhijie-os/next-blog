@@ -1461,6 +1461,89 @@ public:
 ~~~
 
 
+## 844. Backspace String Compare
+
+- Difficulty: Easy
+- Link: [844. Backspace String Compare](https://leetcode.com/problems/backspace-string-compare/)
+
+
+### Description 
+
+Given two strings `s` and `t`, return `true` if they are equal when both are typed into empty text editors. `'#'` means a backspace character.
+
+Note that after backspacing an empty text, the text will continue empty.
+
+
+
+### Solution 
+
+The challenge point of this problem is to only use `O(1)` space in `O(n)` time. Intuition is the backspace character never void character after it. That is `#a` never voids `a`. Thus, if we walk the strings in reverse order, we do not need to revisiting some of the previous characters.
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+class Solution {
+public:
+    bool backspaceCompare(string s, string t) {
+        // prepare to traverse in the reversed order
+        int i=s.size()-1, j=t.size()-1;
+        
+        // remeber how many characters to erase
+        int skip_s = 0;
+        int skip_t = 0;
+
+        // need to finish the list
+        while(i>=0 || j>=0) {
+            // walk until the next non-erased character
+            while(i>=0) {
+                if(s[i]=='#') {
+                    skip_s++;
+                    i--;
+                }
+                else if(skip_s>0){
+                    // erase a character
+                    skip_s--;
+                    i--;
+                }
+                // at the next consumable character
+                else {
+                    break;
+                }
+            }
+            // walk until the next non-erased character
+            while(j>=0 ) {
+                if(t[j]=='#') {
+                    skip_t++;
+                    j--;
+                }
+                else if(skip_t>0){
+                    // erase a character
+                    skip_t--;
+                    j--;
+                }
+                // consume another character
+                else {
+                    break;
+                }
+            }
+            // compare those two characters
+            if( i>=0 && j>=0 && s[i]!=t[j]){
+                return false;
+            }
+            if ((i >= 0) != (j >= 0))
+                    return false;
+            // so far so good, keep traversing
+            i--;
+            j--;
+        }
+        return true;
+>>>>>>> remotes/origin/main
+    }
+};
+~~~
+
+
 
 ## 394. Decode String
 
@@ -1478,13 +1561,10 @@ You may assume that the input string is always valid; there are no extra white s
 The test cases are generated so that the length of the output will never exceed `10^5`.
 
 
-### Solution 
-
 ~~~cpp
 class Solution {
 public:
     string decodeString(string s) {
-              
     }
-};
+}
 ~~~
