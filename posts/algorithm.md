@@ -1411,8 +1411,8 @@ You are playing the *Bulls and Cows* game with your friend.
 
 You write down a secret number and ask your friend to guess what the number is. When your friend makes a guess, you provide a hint with the following info:
 
-    The number of "bulls", which are digits in the guess that are in the correct position.
-    The number of "cows", which are digits in the guess that are in your secret number but are located in the wrong position. Specifically, the non-bull digits in the guess that could be rearranged such that they become bulls.
+The number of "bulls", which are digits in the guess that are in the correct position.
+The number of "cows", which are digits in the guess that are in your secret number but are located in the wrong position. Specifically, the non-bull digits in the guess that could be rearranged such that they become bulls.
 
 Given the secret number `secret` and your friend's guess `guess`, return the hint for your friend's guess.
 
@@ -1456,6 +1456,35 @@ public:
             }
         }
         return to_string(bull)+"A"+to_string(cow)+"B";
+    }
+};
+~~~
+
+
+
+## 394. Decode String
+
+- Difficulty: Medium
+- Link: [394. Decode String](https://leetcode.com/problems/decode-string/)
+
+### Description
+
+Given an encoded string, return its decoded string.
+
+The encoding rule is: `k[encoded_string]`, where the `encoded_string` inside the square brackets is being repeated exactly `k` times. Note that `k` is guaranteed to be a positive integer.
+
+You may assume that the input string is always valid; there are no extra white spaces, square brackets are well-formed, etc. Furthermore, you may assume that the original data does not contain any digits and that digits are only for those repeat numbers, `k`. For example, there will not be input like `3a` or `2[4]`.
+
+The test cases are generated so that the length of the output will never exceed `10^5`.
+
+
+### Solution 
+
+~~~cpp
+class Solution {
+public:
+    string decodeString(string s) {
+              
     }
 };
 ~~~
