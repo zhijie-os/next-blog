@@ -1560,11 +1560,58 @@ You may assume that the input string is always valid; there are no extra white s
 
 The test cases are generated so that the length of the output will never exceed `10^5`.
 
+### Solution 
+
+- Runtime: `O(n)`
+- Space: `O(n)`
 
 ~~~cpp
 class Solution {
 public:
-    string decodeString(string s) {
+    string repeat(int n, string s){
+        string result;
+        for (int i=0; i<n ;i++){
+            result += s ; 
+        }
+        return result;
     }
-}
+    
+    string decodeString(string s) {
+        stack<string> stack;
+        
+        for(char &c : s) {
+            if(c!=']'){
+                stack.push(string(1,c));
+            }
+            else {
+                string temp;
+                // accumulate inner chars
+                while(stack.top()!="["){
+                    temp = stack.top() + temp;
+                    stack.pop();
+                }
+                // pop '['
+                stack.pop();
+                
+                string repeation;
+                // get the number of repeating
+                while(!stack.empty() && (stack.top()[0]>='0' && stack.top()[0]<='9')){
+                    
+                    repeation = stack.top() + repeation;
+                    stack.pop();
+                    
+                }
+                stack.push(repeat(stoi(repeation), temp));
+            }
+        }
+        
+        string result;
+        
+        while(!stack.empty()){
+            result = stack.top() + result;
+            stack.pop();
+        }
+        return result;
+    }
+};
 ~~~
