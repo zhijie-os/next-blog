@@ -1562,6 +1562,10 @@ The test cases are generated so that the length of the output will never exceed 
 
 ### Solution 
 
+When dealing with nested structured, e.g. brackets, stack is a natural way to solve the problems. The key is to start to pop whenever encounter a closing bracket until reaches the 
+opening bracket.
+
+
 - Runtime: `O(n)`
 - Space: `O(n)`
 
@@ -1583,7 +1587,7 @@ public:
             if(c!=']'){
                 stack.push(string(1,c));
             }
-            else {
+            else { // start to pop when closing 
                 string temp;
                 // accumulate inner chars
                 while(stack.top()!="["){
@@ -1596,17 +1600,16 @@ public:
                 string repeation;
                 // get the number of repeating
                 while(!stack.empty() && (stack.top()[0]>='0' && stack.top()[0]<='9')){
-                    
                     repeation = stack.top() + repeation;
                     stack.pop();
-                    
                 }
+                // apply the repeation and push back to the stack
                 stack.push(repeat(stoi(repeation), temp));
             }
         }
         
+        // concate all the stack strings to get result
         string result;
-        
         while(!stack.empty()){
             result = stack.top() + result;
             stack.pop();
