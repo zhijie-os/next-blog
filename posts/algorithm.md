@@ -1538,7 +1538,6 @@ public:
             j--;
         }
         return true;
->>>>>>> remotes/origin/main
     }
 };
 ~~~
@@ -1618,3 +1617,56 @@ public:
     }
 };
 ~~~
+
+
+## 1046. Last Stone Weight
+
+- Difficulty: Easy
+- Link: [1046. Last Stone Weight](https://leetcode.com/problems/last-stone-weight/)
+
+### Description 
+
+You are given an array of integers `stones` where `stones[i]` is the weight of the `i`th stone.
+
+We are playing a game with the stones. On each turn, we choose the heaviest two stones and smash them together. Suppose the heaviest two stones have weights `x` and `y` with `x <= y`. The result of this smash is:
+
+If `x == y`, both stones are destroyed, and
+If `x != y`, the stone of weight `x` is destroyed, and the stone of weight `y` has new weight `y - x`.
+
+At the end of the game, there is at most one stone left.
+
+Return the weight of the last remaining stone. If there are no stones left, return `0`.
+
+### Solution
+
+Use a priority queue (max-heap) to finding the heaviest stones (stones with max weights) in `O(lgn)` time. Insert back the remaining in another `O(lgn)` time.
+
+- Runtime: `O(nlgn)`
+- Space: `O(1)` - no extra space consumption; simply operate on the given vector
+
+
+~~~cpp
+class Solution {
+public:
+    int lastStoneWeight(vector<int>& stones) {
+        // by default, it is max-heap
+        priority_queue<int> maxq(stones.begin(), stones.end());
+
+        while(maxq.size()>1){
+            int stone1 = maxq.top();
+            maxq.pop();
+
+            int stone2 = maxq.top();
+            maxq.pop();
+
+            int theRest = stone1 - stone2;
+            if (theRest > 0) {
+                maxq.push(theRest);
+            }
+        }
+
+        return maxq.empty()? 0:maxq.top();
+    }
+};
+~~~
+
