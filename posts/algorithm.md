@@ -1685,12 +1685,52 @@ Return the answer *sorted* by *the frequency* from highest to lowest. Sort the w
 
 ### Solution 
 
+- Runtime: `O(nlgn)`
+- Space: `O(n)`
 
 ~~~cpp
+// implementation of less comparator
+class cComparator {
+public:
+    bool operator()(pair<string, int> word1, pair<string, int> word2){
+        if(word1.second == word2.second) {
+            return word1.first > word2.first;
+        }
+        else {
+            return word1.second < word2.second;
+        }
+    }
+};
+
 class Solution {
 public:
     vector<string> topKFrequent(vector<string>& words, int k) {
+        unordered_map<string, int> occurrence;
+        // count the occurrence
+        for(string &word: words) {
+            occurrence[word]++;
+        }
+
+        // create a less comparator
+        priority_queue<pair<string,int>, vector<pair<string,int>>, cComparator> maxq;
         
+        for(auto &it: occurrence) {
+                maxq.push({it.first, it.second});
+        }
+
+        vector<string> result;
+
+        while(!maxq.empty()) {
+            // only want to the k-biggest 
+            if(k==0){
+                break;
+            }
+            result.push_back(maxq.top().first);
+            maxq.pop();
+            k--;
+        }
+
+        return result;
     }
 };
 ~~~
