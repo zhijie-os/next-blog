@@ -1,6 +1,6 @@
 ---
 title: 'Daily Algorithm: Leetcode in Rust/C++'
-date: '2023-01-13'
+date: '2023-01-26'
 ---
 # Introduction
 
