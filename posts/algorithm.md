@@ -1758,7 +1758,7 @@ Return `true` if `n` is a happy number, and `false` if not.
 
 A naive solution is to compute powers and then replace its digits indefinitely. However, the algorithm might not be able to terminate since it could loop endlessly. Thus, we can use Floyd's Cycle-Finding algorithm (recall detecting cycle in linked list) to find a cycle then we can simply return false.
 
-- Runtime: `O(lgn)`
+- Runtime: `O(n)`
 - Space: `O(1)`
 
 
@@ -1795,6 +1795,60 @@ public:
         }
         
         return true;
+    }
+};
+~~~
+
+
+## 54. Spiral Matrix
+
+- Difficulty: Medium
+- Link: [54. Spiral Matrix](https://leetcode.com/problems/spiral-matrix/?envType=study-plan&id=level-2)
+
+
+### Description
+
+Given an `m x n` matrix, return all elements of the matrix in spiral order.
+
+
+### Solution
+
+- Runtime: `O(mn)`
+- Space: `O(1)`
+
+
+~~~cpp
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        int m = matrix.size();
+        int n = matrix[0].size();
+        int top = 0, left = 0;
+        int bottom = m-1, right = n-1;
+        vector<int> result; 
+        while (top<=bottom && left<=right) {
+            // first row
+            for (int i=left; i<=right && top<=bottom; i++) {
+                result.push_back(matrix[top][i]);
+            }
+            top++;
+            // last column
+            for (int i=top; i<=bottom && left<=right; i++) {
+                result.push_back(matrix[i][right]);
+            }
+            right--;
+            // last row
+            for (int i=right; i>=left && top<=bottom; i--) {
+                result.push_back(matrix[bottom][i]);
+            }
+            bottom--;
+            // first column
+            for (int i=bottom; i>=top && left<=right; i--) {
+                result.push_back(matrix[i][left]);
+            }
+            left++;
+        }
+        return result; 
     }
 };
 ~~~
