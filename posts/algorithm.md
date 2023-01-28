@@ -1734,3 +1734,67 @@ public:
     }
 };
 ~~~
+
+## 202. Happy Number
+
+- Difficulty: Easy
+- Link: [202. Happy Number](https://leetcode.com/problems/happy-number/?envType=study-plan&id=level-2)
+
+
+### Description
+
+Write an algorithm to determine if a number `n` is happy.
+
+A `happy number` is a number defined by the following process:
+
+Starting with any positive integer, replace the number by the sum of the squares of its digits.
+Repeat the process until the number equals `1` (where it will stay), or it `loops endlessly in a cycle` which does not include 1.
+Those numbers for which this process ends in `1` are happy.
+
+Return `true` if `n` is a happy number, and `false` if not.
+
+### Solution
+
+
+A naive solution is to compute powers and then replace its digits indefinitely. However, the algorithm might not be able to terminate since it could loop endlessly. Thus, we can use Floyd's Cycle-Finding algorithm (recall detecting cycle in linked list) to find a cycle then we can simply return false.
+
+- Runtime: `O(lgn)`
+- Space: `O(1)`
+
+
+~~~cpp
+class Solution {
+public:
+    int squares(int n){
+        int result = 0;
+        while(n>0){
+            if(n%10>0){
+                result += pow((n%10),2);
+            }
+            n /= 10;
+        }
+        return result;
+    }
+    
+    bool isHappy(int n) {
+        int slow = n;
+        int fast = n;
+        
+        while(slow !=1 && fast!=1) {
+            slow = squares(slow);
+            fast = squares(squares(fast));
+            
+            if(fast == 1) {
+                return true;
+            }
+            
+            if(slow==fast){
+                std::cout << slow << "," << fast << endl;
+                return false;
+            }
+        }
+        
+        return true;
+    }
+};
+~~~
