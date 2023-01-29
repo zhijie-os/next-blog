@@ -1906,3 +1906,49 @@ public:
     }
 };
 ~~~
+
+
+
+## 14. Longest Common Prefix
+
+- Difficulty: Easy
+- Link: [14. Longest Common Prefix](https://leetcode.com/problems/longest-common-prefix)
+
+
+### Description 
+
+Write a function to find the longest common prefix string amongst an array of strings.
+
+If there is no common prefix, return an empty string "".
+
+### Solution 
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+
+~~~cpp
+class Solution {
+public:
+    string longestCommonPrefix(vector<string>& strs) {
+        // gradually strip down the longestCommonPrefix
+        string longest = strs[0];
+        
+        for(int i=1; i<strs.size(); i++) {
+            // if the comparing string is shorter than the current "longest" string
+            if(strs[i].size()<longest.size()) {
+                longest = longest.substr(0,strs[i].size());
+            }
+            // compare each character in the comparing string, and cut if a char is different
+            for(int j=0; j<strs[i].size(); j++) {
+                if(longest[j]!=strs[i][j]){
+                    longest = longest.substr(0,j);
+                    break;
+                }
+            }
+        }
+        
+        return longest;
+    }
+};
+~~~
