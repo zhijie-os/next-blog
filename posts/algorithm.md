@@ -1964,6 +1964,7 @@ public:
 Given two non-negative integers `num1` and `num2` represented as strings, return the product of `num1` and `num2`, also represented as a string.
 
 ### Solution
+
 - Runtime: `O(mn)`
 - Space: `O(m)`
 
@@ -2065,6 +2066,47 @@ public:
         
         reverse(result.begin(), result.end());
         return result;
+    }
+};
+~~~
+
+## 19. Remove Nth Node From End of List
+
+- Difficulty: Medium
+- Link: [19. Remove Nth Node From End of List](https://leetcode.com/problems/remove-nth-node-from-end-of-list)
+
+### Description 
+
+Given the head of a linked list, remove the nth node from the end of the list and return its head.
+
+### Solution
+
+It is trivial to come up an algorithm that takes 2 passes. The challenege is to remove the node in a single pass without counting the number of nodes in the list.
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        
+        ListNode* slow = head;
+        ListNode* fast = head;
+        // fastfoward n places
+        for(int i=0;i<n;i++){
+            fast = fast -> next;
+        }
+        // if input size of the linkedlist == n, that is remove the head itself
+        if (!fast) return head->next;
+        // when fast reaches the end of the list, slow should be just before the n-th last element
+        while(fast->next){
+            slow = slow -> next;
+            fast = fast -> next;
+        }
+        // skip the n-th las element
+        slow->next = slow->next->next;
+        return head;
     }
 };
 ~~~
