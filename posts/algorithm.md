@@ -1952,3 +1952,119 @@ public:
     }
 };
 ~~~
+
+
+## 43. Multiply Strings
+
+- Difficulty: Medium
+- Link: [43. Multiply Strings](https://leetcode.com/problems/multiply-strings)
+
+### Description
+
+Given two non-negative integers `num1` and `num2` represented as strings, return the product of `num1` and `num2`, also represented as a string.
+
+### Solution
+- Runtime: `O(mn)`
+- Space: `O(m)`
+
+~~~cpp
+class Solution {
+public:
+    string add(string num1, string num2) {
+        int carry = 0;
+        int ptr1 = 0;
+        int ptr2 = 0;
+        string result;
+        
+        while(ptr1<num1.size() && ptr2<num2.size()) {
+            int temp = num1[ptr1]-'0' + num2[ptr2]-'0'+carry;
+            if(temp >= 10 ){
+                carry = 1;
+                result+= to_string(temp%10);
+            }
+            else {
+                carry = 0;
+                result+= to_string(temp);
+            }
+            ptr1++;
+            ptr2++;
+        }
+        
+        while(ptr1<num1.size()) {
+            int temp = num1[ptr1]-'0'+carry;
+            if(temp >= 10 ){
+                carry = 1;
+                result+=to_string(temp%10);
+            }
+            else{
+                carry = 0;
+                result+= to_string(temp);
+            }
+            ptr1++;
+        }
+        
+        while(ptr2<num2.size()) {
+            int temp = num2[ptr2]-'0'+carry;
+            if(temp >= 10 ){
+                carry = 1;
+                result+=to_string(temp%10);
+            }
+            else{
+                carry = 0;
+                result+= to_string(temp);
+            }
+            ptr2++;
+        }
+        
+        
+        if(carry){
+            result+="1";
+        }
+        return result;
+    }
+    
+    string multiplyOneDigit(string &num, int digit) {
+        int carry =0;
+        string result;
+        
+        for(auto &c: num) {
+            int temp = (c-'0')*digit+carry;
+            if(temp>=10){
+                // update carry
+                carry = temp/10;
+                // append a digit
+                result += to_string(temp%10);
+            }
+            else{
+                carry = 0;
+                // append a digit
+                result += to_string(temp);
+            }
+        }
+        
+        if(carry > 0){
+            result+=to_string(carry);
+        }
+        
+        return result;
+    }
+    
+    string multiply(string num1, string num2) {
+        if(num1=="0"||num2=="0"){
+            return "0";
+        }
+        
+        reverse(num1.begin(), num1.end());
+        reverse(num2.begin(), num2.end());
+        
+        string result;
+        
+        for(int i=0; i<num2.size(); i++) {
+            result=add(result, string(i,'0')+multiplyOneDigit(num1, num2[i]-'0'));
+        }
+        
+        reverse(result.begin(), result.end());
+        return result;
+    }
+};
+~~~
