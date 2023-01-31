@@ -2110,3 +2110,87 @@ public:
     }
 };
 ~~~
+
+
+## 234. Palindrome Linked List
+
+- Difficulty: Easy
+- Link: [234. Palindrome Linked List](https://leetcode.com/problems/palindrome-linked-list)
+
+
+### Description
+
+Given the `head` of a singly linked list, return `true` if it is a palindrome or `false` otherwise.
+
+ 
+### Solution 
+
+- Runtime: `O(n)`
+- Space: `O(1)`
+
+~~~cpp
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    bool isPalindrome(ListNode* head) {
+        ListNode *slow = head;
+        ListNode *fast = head;
+        
+        // get the middle node or the element just after the middle node
+        while(fast&&fast->next&&fast->next->next) {
+            fast = fast->next->next;
+            slow = slow->next;
+        }
+        
+        // reverse everything after middle point
+        ListNode *reversed = reverse(slow);
+        
+        // check if matches
+        while(reversed && head) {
+            if(reversed->val!=head->val){
+                return false;
+            }
+            reversed=reversed->next;
+            head=head->next;
+        }
+        return true;
+    }
+    
+    // reverse is O(n) and take no space
+    ListNode* reverse(ListNode* head)
+    {
+        ListNode *prev=nullptr, *curr=head, *next=nullptr;
+
+        while(curr)
+        {
+            next = curr->next;
+            curr->next = prev;
+
+            prev = curr;
+            curr = next;
+
+        }
+        
+        return prev;
+    }
+};
+~~~
