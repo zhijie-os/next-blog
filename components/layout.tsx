@@ -24,7 +24,6 @@ export default function Layout({ children, home }: { children: any, home: any })
                 {/* <meta property="og:image" content={``}></meta> */}
             </Head>
 
-            {/* my big ugly face */}
             {/* <div "flex flex-col "></div> */}
             <Navbar></Navbar>
             <header className="flex justify-center">
@@ -63,7 +62,6 @@ export default function Layout({ children, home }: { children: any, home: any })
                             </div>
                             <p>Love yourself before loving someone else</p>
                         </div>
-
                     </>
                 )
                 }

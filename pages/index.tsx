@@ -9,9 +9,6 @@ import Timeline from '../components/timeline'
 export default function Home() {
   return (
     <Layout home={true}>
-
-
-
       {/* layout header still work, this adds to the layout header */}
       <div className="w-full text-center">
         <div className="max-w-4xl w-full mx-auto p-2 flex flex-col md:flex-row justify-center items-center">
@@ -49,7 +46,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* <Timeline></Timeline>  */}
+          <Timeline></Timeline> 
         </div>
       </div>
     </Layout>

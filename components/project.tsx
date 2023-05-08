@@ -2,6 +2,8 @@ import YouTube from 'react-youtube';
 import Image from 'next/image'
 import Link from 'next/link'
 import { ProjectProps } from '../data/projectData';
+import { AiOutlineArrowRight } from 'react-icons/ai'
+
 
 export default function Project({ title, description, imageUrl, link }: ProjectProps) {
     return (
@@ -34,7 +36,7 @@ export default function Project({ title, description, imageUrl, link }: ProjectP
                     className="pl-2 text-base font-medium leading-6 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                     aria-label={`Link to ${title}`}
                 >
-                    Learn more &rarr;
+                    <div className="flex m"> Learn more <AiOutlineArrowRight className="m-2" /> </div>
                 </Link>
             </div>
         </div>
