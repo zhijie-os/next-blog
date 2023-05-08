@@ -40,7 +40,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                                     alt=""
                                 ></Image>
                             </div>
-                            <p>Love yourself before loving someone else</p>
+                            <p>Love yourself before love someone else</p>
                             <LinkBar></LinkBar>
                         </div>
 
@@ -60,7 +60,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                                     />
                                 </Link>
                             </div>
-                            <p>Love yourself before loving someone else</p>
+                            <p>Love yourself before love someone else</p>
                         </div>
                     </>
                 )
