@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Link from 'next/link';
-const headerNavLinks: { title: string; href: string }[] = [{ title: "HOME", href: "/" }, { title: "BLOG", href: "/posts" }, { title: "PROJECTS", href: "/projects" }]
+const headerNavLinks: { title: string; href: string }[] = [{ title: "HOME", href: "/" }, { title: "BLOG", href: "/posts" }, { title: "PROJECTS", href: "/projects" },{ title: "GALLERY", href: "/gallery" }]
 import Image from 'next/image';
 export default function MobileNavbar() {
     const [navShow, setNavShow] = useState(false);

@@ -12,6 +12,7 @@ export default function Home() {
       {/* layout header still work, this adds to the layout header */}
       <div className="w-full text-center">
         <div className="max-w-4xl w-full mx-auto p-2 flex flex-col md:flex-row justify-center items-center">
+          
           <div className="flex flex-col mx-auto">
             <h1 className="text-4xl py-2 font-bold">
               <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
@@ -46,7 +47,7 @@ export default function Home() {
             </p>
           </div>
 
-          <Timeline></Timeline> 
+          <Timeline ></Timeline> 
         </div>
       </div>
     </Layout>

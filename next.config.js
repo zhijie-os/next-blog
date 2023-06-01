@@ -5,7 +5,12 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains:['bit.ly']
+    remotePatterns:[
+      {
+        hostname: 'source.unsplash.com',
+      }
+    ],
+    // domains:['bit.ly','source.unsplash.com']
   },
 }
  

@@ -1,48 +1,133 @@
-import Image from "next/image"
-import { useState } from "react"
+import Image from "next/image";
+import { useState } from "react";
+import { RenderPhotoProps } from "react-photo-album";
+import { PhotoAlbum } from "react-photo-album";
+import "yet-another-react-lightbox/styles.css";
+
+import Lightbox from "yet-another-react-lightbox";
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
+import Slideshow from "yet-another-react-lightbox/plugins/slideshow";
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+import Layout from '../components/layout'
+import Footer from "../components/footer";
+import Navbar from "../components/navbar";
+import Link from "next/link";
+import ScrollTop from "../components/scrollTop";
+
+const photos = [
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan_1.jpg', width: 2268, height: 4032 },
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan_1.jpg', width: 2268, height: 4032 },
+    { src: '/photos/yushan_1.jpg', width: 2268, height: 4032 },
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan.jpg', width: 4032, height: 2268 },
+    { src: '/photos/yushan_1.jpg', width: 2268, height: 4032 },
+]
 
 
-export default function Gallery({images}) {
+function NextJsImage({
+    photo,
+    imageProps: { alt, title, sizes, className, onClick },
+    wrapperStyle,
+}) {
     return (
-        <div className="max-w-2xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
-            <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-                {/* <Image  className="group-hover:opacity-75"    
-                        src="/images/avatar.png"
-                        width={500}
-                        height={500}
-                        alt=""
-                        /> */}
-                {images.map((image)=>(
-                    <BlurImage key={image.id} image={image}></BlurImage>
-                ))}
+        <div style={{ ...wrapperStyle, position: "relative" }}>
+            <Image
+                // fill
+                src={photo}
+                placeholder={"blurDataURL" in photo ? "blur" : undefined}
+                {...{ alt, title, sizes, className, onClick }}
+            />
+        </div>
+    );
+}
+
+
+export default function ImageGallery() {
+    const [index, setIndex] = useState(-1)
+    const home = false
+
+    return (
+        <div >
+            <Navbar></Navbar>
+            <header className="flex justify-center mb-4">
+                {home ? (
+                    <>
+                        <div className="flex flex-col">
+                            <div className="flex justify-center">
+                                <Image
+                                    priority
+                                    src="/images/avatar.jpg"
+                                    className="rounded-full"
+                                    height={144}
+                                    width={144}
+                                    alt=""
+                                ></Image>
+                            </div>
+                            <p>Love yourself before love someone else</p>
+                            <LinkBar></LinkBar>
+                        </div>
+
+                    </>
+                ) : (
+                    <>
+                        <div className="flex flex-col">
+                            <div className="flex justify-center">
+                                <Link href="/">
+                                    <Image
+                                        priority
+                                        className="rounded-full"
+                                        src="/images/avatar.png"
+                                        height={88}
+                                        width={88}
+                                        alt=""
+                                    />
+                                </Link>
+                            </div>
+                            <p>Love yourself before love someone else</p>
+                        </div>
+                    </>
+                )
+                }
+            </header>
+
+            <PhotoAlbum
+                className=""
+                layout="rows"
+                photos={photos}
+                renderPhoto={NextJsImage}
+                sizes={{
+                    size: "calc(100vw - 40px)",
+                    sizes: [
+                        { viewport: "(max-width: 299px)", size: "calc(100vw - 10px)" },
+                        { viewport: "(max-width: 599px)", size: "calc(100vw - 20px)" },
+                        { viewport: "(max-width: 1199px)", size: "calc(100vw - 30px)" },
+                    ],
+                }}
+                onClick={({ index }) => setIndex(index)}
+            />
+
+            <Lightbox
+                slides={photos}
+                open={index >= 0}
+                index={index}
+                close={() => setIndex(-1)}
+                // enable optional lightbox plugins
+                plugins={[Fullscreen, Slideshow, Thumbnails, Zoom]}
+            />
+
+
+            <ScrollTop></ScrollTop>
+            <div className="mt-4">
+                <Footer></Footer>
             </div>
         </div>
-    )
+    );
 }
 
-function cn(...classes) {
-    return classes.filter(Boolean).join(' ');
-}
 
-function BlurImage({image}) {
-    const [isLoading, setLoading] = useState(true)
-
-    return (
-        <a href={image.href} className="group">
-            <div className="aspect-w-1 aspect-h-1 
-                xl:aspect-w-7 xl:aspect-h-8 w-full
-                overflow-hidden rounded-lg bg-gray-200">
-                <Image alt=""
-                    src={image.imageSrc}
-                    className={cn("group-hover:opacity-75 duration-700 ease-in-out",
-                     isLoading ? 'grayscale blur-2xl scale-110': 'grayscale-0 blur-0 scale-100')}
-                    layout="fill"
-                    objectFit="cover"
-                    onLoadingComplete={() => setLoading(false)}
-                    ></Image>    
-            </div>
-            <h3 className="mt-4 text-sm">Zhijie Xia</h3>
-            <p className="mt-1 text-lg font-medium">@ZhijieXia</p>
-        </a>
-    )
-}
