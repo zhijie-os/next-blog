@@ -15,6 +15,7 @@ import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import Link from "next/link";
 import ScrollTop from "../components/scrollTop";
+import LinkBar from "../components/linkbar";
 
 const photos = [
     { src: "/photos/37.jpg", width: 4032, height: 2268 },
