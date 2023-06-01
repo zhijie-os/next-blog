@@ -11,7 +11,7 @@ export default function Home() {
     <Layout home={true}>
       {/* layout header still work, this adds to the layout header */}
       <div className="w-full text-center">
-        <div className="max-w-4xl w-full mx-auto p-2 flex flex-col md:flex-row justify-center items-center">
+        <div className="max-w-4xl w-full mx-auto p-2 flex flex-col justify-center items-center">
           
           <div className="flex flex-col mx-auto">
             <h1 className="text-4xl py-2 font-bold">

@@ -30,7 +30,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 {home ? (
                     <>
                         <div className="flex flex-col">
-                            <div className="flex justify-center">
+                            <div className="flex justify-center m-1">
                                 <Image
                                     priority
                                     src="/images/avatar.jpg"
@@ -40,7 +40,8 @@ export default function Layout({ children, home }: { children: any, home: any })
                                     alt=""
                                 ></Image>
                             </div>
-                            <p>Love yourself before love someone else</p>
+                            <div className="flex ml-2">“That which we need the most will be found where we least want to look.” -  Carl Jung.</div>
+
                             <LinkBar></LinkBar>
                         </div>
 
@@ -48,7 +49,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 ) : (
                     <>
                         <div className="flex flex-col">
-                            <div className="flex justify-center">
+                            <div className="flex justify-center m-1">
                                 <Link href="/">
                                     <Image
                                         priority
@@ -60,7 +61,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                                     />
                                 </Link>
                             </div>
-                            <p>Love yourself before love someone else</p>
+                            <div className="flex ml-2">“That which we need the most will be found where we least want to look.” -  Carl Jung.</div>
                         </div>
                     </>
                 )
