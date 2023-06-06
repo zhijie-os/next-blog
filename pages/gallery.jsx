@@ -18,6 +18,12 @@ import ScrollTop from "../components/scrollTop";
 import LinkBar from "../components/linkbar";
 
 const photos = [
+    { src: "/photos/43.jpg", width: 2688, height: 1512 },
+    { src: "/photos/42.jpg", width: 2688, height: 1512 },
+    { src: "/photos/41.jpg", width: 2688, height: 1512 },
+    { src: "/photos/40.jpg", width: 2688, height: 1512 },
+    { src: "/photos/39.jpg", width: 2688, height: 1512 },
+    { src: "/photos/38.jpg", width: 2688, height: 1512 },
     { src: "/photos/37.jpg", width: 4032, height: 2268 },
     { src: "/photos/36.jpg", width: 2268, height: 4032 },
     { src: "/photos/35.jpg", width: 1440, height: 1080 },
