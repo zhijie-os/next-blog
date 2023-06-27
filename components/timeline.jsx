@@ -20,6 +20,12 @@ export default function Timeline() {
                     {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
                     <p className="text-base  font-normal text-gray-500 dark:text-gray-200">Bachelor Program with First-class Honours (GPA 3.95/4) in Computer Science at the University of Calgary.</p>
                 </li>
+                <li className="mb-5 ml-4 ">
+                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
+                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">2023 - Current</time>
+                    {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
+                    <p className="text-base  font-normal text-gray-500 dark:text-gray-200">Software Developer at Knowd, Toronto, ON, Canada. </p>
+                </li>
                 {/* <li className="ml-4">
                     <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
                     <time className="mb-1 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">April 2022</time>
