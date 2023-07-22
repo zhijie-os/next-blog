@@ -1,10 +1,7 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-import Link from 'next/link'
-import Layout from '../components/layout'
+import Layout from "../components/layout";
 // import utilStyles from '../styles/utils.module.css';
-import Timeline from '../components/timeline'
+import Timeline from "../components/timeline";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -12,44 +9,63 @@ export default function Home() {
       {/* layout header still work, this adds to the layout header */}
       <div className="w-full text-center">
         <div className="max-w-4xl w-full mx-auto p-2 flex flex-col justify-center items-center">
-          
           <div className="flex flex-col mx-auto">
+            {/* introduction section  */}
             <h1 className="text-4xl py-2 font-bold">
-              <span className="text-cyan-500">Zhijie Xia</span> is an undergraduate student and researcher at University of Calgary.
+              <span className="text-cyan-500">Zhijie Xia</span> is an
+              undergraduate student, researcher at{" "}
+              <Link className="underline" href={"https://www.ucalgary.ca/"}>
+                University of Calgary
+              </Link>
+              , and full stack software engineer at{" "}
+              <Link className="underline" href="https://www.knowd.ai/">
+                Knowd
+              </Link>
+              .
             </h1>
+
+            {/* student section  */}
             <p className="py-4 text-center">
-              As a student majors in Computer Science at
-              University of Calgary, Zhijie received multiple scholarships
-              and awards for his
-              outstanding academic performance.
-              He has taken most of essential computer science courses
-              such as Operating System, Algorithm&Data Structure,
-              Compiler Construction, Computer Network, Network Security,
-              System Security and etc. He is ready to apply his skills
-              in the field of software engineering and looking for
-              FOSS projects to contribute.
+              As an exceptional Computer Science major at the University of
+              Calgary, Zhijie has received multiple scholarships and awards for
+              his outstanding academic performance. He has explored a diverse
+              range of essential courses, such as Operating Systems, Algorithm &
+              Data Structure, Compiler Construction, Computer Networks, Network
+              Security, and System Security. Eager to apply his well-honed
+              skills in software engineering, he seeks exciting opportunities to
+              contribute to FOSS projects.
             </p>
 
+            {/* research section */}
             <p className="py-4 text-center">
-              As a researcher,
-              Zhijie&rsquo;
-              research interests are System
-              Security and Mixed Reality.
-              Currently, he is supervised
-              by Dr. Joel Reardon on an
-              Android Permission System project.
-              During the previous summer,
-              he was supervised by Dr. Ryo Suzuki at
-              Programmble Reality Lab at University of Calgary.
-              He developed an AR-sketching system called RealityCanvas
-              to allow users to create animation in real-time with ease. Moreover,
-              he submitted the system to ACM SIGCHI 2023 as leading author.
+              In the realm of research, Zhijie focuses on two compelling areas:
+              System Security and Mixed Reality. Under the expert guidance of
+              Dr. Joel Reardon and Dr. Ryo Suzuki, respectively, he has made
+              significant strides in his investigations. One notable achievement
+              is his co-authorship of the paper{" "}
+              <Link
+                className="underline"
+                href="https://drive.google.com/file/d/1A1r61O4RwECgX0xsq2rJ8P3FBne6VXTL/view?usp=drive_link"
+              >
+                RealityCanvas
+              </Link>
+              , presented at the prestigious UIST 2023 conference.
+            </p>
+
+            {/* developer section */}
+            <p className="py-4 pb-6 text-center">
+              Having embarked on a career as a software engineer, Zhijie has
+              already gained valuable experience at a dynamic startup company
+              based in Toronto. This opportunity allowed him to collaborate with
+              a myriad of interesting and competent professionals, providing him
+              with an invaluable taste of the tech industry&rsquo;s vibrancy and
+              innovation.
             </p>
           </div>
 
-          <Timeline ></Timeline> 
+          <Timeline></Timeline>
         </div>
       </div>
     </Layout>
-  )
+  );
 }
