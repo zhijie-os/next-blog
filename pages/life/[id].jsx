@@ -13,7 +13,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { nord } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
 // @ts-nocheck
-export default function Post({ postData }) {
+export default function LifePost({ postData }) {
     return (
         <Layout home={false}>
             <Head>

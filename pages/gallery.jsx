@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { useState } from "react";
-import { RenderPhotoProps } from "react-photo-album";
 import { PhotoAlbum } from "react-photo-album";
 import "yet-another-react-lightbox/styles.css";
 
@@ -10,7 +9,6 @@ import Slideshow from "yet-another-react-lightbox/plugins/slideshow";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
-import Layout from "../components/layout";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import Link from "next/link";
@@ -105,7 +103,7 @@ export default function ImageGallery({ photos }) {
         }}
         onClick={({ index }) => setIndex(index)}
       />
-
+      
       <Lightbox
         slides={photos}
         open={index >= 0}
@@ -123,10 +121,11 @@ export default function ImageGallery({ photos }) {
   );
 }
 
+
+// prepare a list of image source, width and height
 export async function getStaticProps() {
   const photoDirectory = path.join(process.cwd(), "public/photos");
   const photoFiles = fs.readdirSync(photoDirectory);
-
   const photos = photoFiles.map((photo) => {
     const filePath = `/photos/${photo}`;
     const dimensions = sizeOf("public" + filePath);
