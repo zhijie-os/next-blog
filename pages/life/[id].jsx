@@ -1,16 +1,16 @@
-import Layout from '../../components/layout'
-import { getAllPostIds, getPostData } from '../../lib/posts'
-import Head from 'next/head'
-import Date from '../../components/date'
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'
+import Layout from "../../components/layout";
+import { getAllPostIds, getPostData } from "../../lib/lifePosts";
+import Head from "next/head";
+import Date from "../../components/date";
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "github-markdown-css/github-markdown.css";
 
 // import remarkToc from 'remark-toc';
 
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { nord } from 'react-syntax-highlighter/dist/cjs/styles/prism'
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { nord } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 // @ts-nocheck
 export default function LifePost({ postData }) {
@@ -59,18 +59,18 @@ export default function LifePost({ postData }) {
 }
 
 export async function getStaticPaths() {
-    const paths = getAllPostIds()
-    return {
-        paths,
-        fallback: false
-    }
+  const paths = getAllPostIds();
+  return {
+    paths,
+    fallback: false,
+  };
 }
 
 export async function getStaticProps({ params }) {
-    const postData = await getPostData(params.id)
-    return {
-        props: {
-            postData
-        }
-    }
+  const postData = await getPostData(params.id);
+  return {
+    props: {
+      postData,
+    },
+  };
 }
