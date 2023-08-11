@@ -1,4 +1,4 @@
-import { getSortedPostsData } from "../lib/posts"
+import { getSortedPostsData } from "../lib/devPosts"
 import Link from "next/link"
 import Date from "../components/date"
 import Layout from "../components/layout"

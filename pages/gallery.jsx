@@ -134,7 +134,7 @@ export async function getStaticProps() {
       width: dimensions.width,
       height: dimensions.height,
     };
-  });
+  }).reverse();
 
   return { props: { photos } };
 }
