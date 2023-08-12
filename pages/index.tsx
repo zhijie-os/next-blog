@@ -18,8 +18,8 @@ export default function Home() {
                 University of Calgary
               </Link>
               , and full stack software engineer at{" "}
-              <Link className="underline" href="https://www.knowd.ai/">
-                Knowd
+              <Link className="underline" href="https://thinklucid.com/">
+                Lucid Vision Labs
               </Link>
               .
             </h1>
