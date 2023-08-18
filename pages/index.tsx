@@ -17,7 +17,7 @@ export default function Home() {
               <Link className="underline" href={"https://www.ucalgary.ca/"}>
                 University of Calgary
               </Link>
-              , and full stack software engineer at{" "}
+              , and firmware developer at{" "}
               <Link className="underline" href="https://thinklucid.com/">
                 Lucid Vision Labs
               </Link>
