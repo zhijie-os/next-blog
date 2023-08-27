@@ -7,7 +7,6 @@ import matter from 'gray-matter'
 // import ReactMarkdown from 'react-markdown';
 
 
-
 const postsDirectory = path.join(process.cwd(), 'devPosts')
 
 export function getSortedPostsData() {
