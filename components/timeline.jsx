@@ -1,44 +1,53 @@
+import { useEffect } from "react";
+
+const dates = [
+  {
+    time: "1999",
+    event: "Born in Hangzhou (杭州), China.",
+  },
+  {
+    time: "2019",
+    event:
+      "Certified in Western Cultures and English at Zhejiang University (浙江大学).",
+  },
+  {
+    time: "2019 - Current",
+    event:
+      "Bachelor Program with First-class Honours (GPA 3.95/4) in Computer Science at the University of Calgary.",
+  },
+  {
+    time: "April 2022 - Current",
+    event:
+      "Mixed Reality Researcher at Programmable Reality Lab, Calgary, AB, Canada.",
+  },
+  {
+    time: "June 2023 - August 2023",
+    event: "Full-stack Developer at Knowd, Toronto, ON, Canada.",
+  },
+  {
+    time: "Sepetember 2023 - Current",
+    event: "Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
+  },
+];
+
 export default function Timeline() {
-    return (
-        <div className="mx-auto p-3 text-left md:text-center">
-            <ol className="relative border-l border-gray-200 dark:border-gray-700">
-                <li className="mb-5 ml-4">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">1999</time>
-                    {/* <h3 className="text-lg text-gray-900 dark:text-white">I was born</h3> */}
-                    <p className="mb-4  text-base font-normal text-gray-500 dark:text-gray-300">Born in Hangzhou (杭州), China.</p>
-                </li>
-                <li className="mb-5 ml-4">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">2019</time>
-                    {/* <h3 className="text-lg text-gray-900 dark:text-white">I was born</h3> */}
-                    <p className="mb-4 text-base font-normal text-gray-500 dark:text-gray-300">Certified in Western Cultures and English at Zhejiang University (浙江大学).</p>
-                </li>
-                <li className="mb-5 ml-4 ">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">2019 - Current</time>
-                    {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
-                    <p className="text-base  font-normal text-gray-500 dark:text-gray-200">Bachelor Program with First-class Honours (GPA 3.95/4) in Computer Science at the University of Calgary.</p>
-                </li>
-                <li className="mb-5 ml-4 ">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">June 2023 - August 2023</time>
-                    {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
-                    <p className="text-base  font-normal text-gray-500 dark:text-gray-200">Full-stack Developer at Knowd, Toronto, ON, Canada. </p>
-                </li>
-                <li className="mb-5 ml-4 ">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">Sepetember 2023 - Current</time>
-                    {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
-                    <p className="text-base  font-normal text-gray-500 dark:text-gray-200">Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada. </p>
-                </li>
-                {/* <li className="ml-4">
-                    <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
-                    <time className="mb-1 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">April 2022</time>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">E-Commerce UI code in Tailwind CSS</h3>
-                    <p className="text-base font-normal text-gray-500 dark:text-gray-400">Get started with dozens of web components and interactive elements built on top of Tailwind CSS.</p>
-                </li> */}
-            </ol>
-        </div>
-    )
+
+  return (
+    <div className="mx-auto p-3 text-left md:text-center">
+      <ol className="relative border-l border-gray-200 dark:border-gray-700">
+        {dates.map((item, index) => (
+          <li className="mb-5 ml-4" key={index}>
+            <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
+            <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+              {item.time}
+            </time>
+            {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
+            <p className="text-base  font-normal text-gray-500 dark:text-gray-200">
+              {item.event}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
