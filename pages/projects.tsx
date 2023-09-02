@@ -16,7 +16,7 @@ export default function Projects() {
             Projects
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            Welcome to my project gallery, here I showcase some of my projects on my way to become a 100X developer.
+            Welcome to my project gallery, here I showcase some of my projects on my way to become a 100X engineer.
           </p>
         </div>
 

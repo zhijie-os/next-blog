@@ -13,6 +13,12 @@ const ProjectData: ProjectProps[] = [
         link: "https://www.youtube.com/watch?v=3P1uGJaSVfg"
     },
     {
+        title: "Knowd Board",
+        description: "Web tool which enables organizations with programmable knowledge infrastructure for automated information sharing, insights discovery, and seamless knowledge flows.",
+        imageUrl: "/teaser/knowd-board.gif",
+        link: "app.knowd.ai"
+    },
+    {
         title: "The Witching Knight",
         description: "2D top-down shooting game in JavaFX. Players navigate through levels, defeat enemies, and complete objectives using a variety of weapons and power-ups. Features single-player campaign mode and multiplayer mode. May include boss battles and a leveling system.",
         imageUrl: "/teaser/the-witching-knight.gif",
