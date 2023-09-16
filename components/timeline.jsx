@@ -26,7 +26,7 @@ const dates = [
   },
   {
     time: "Sepetember 2023 - Current",
-    event: "Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
+    event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
   },
 ];
 
