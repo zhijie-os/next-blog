@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Navbar from './navbar'
 import Footer from './footer'
 import LinkBar from './linkbar'
-
+import { Analytics } from '@vercel/analytics/react';
 import ScrollTop from './scrollTop'
 
 export const siteTitle = "Zhijie Xia | UCalgary"
@@ -69,6 +69,7 @@ export default function Layout({ children, home }: { children: any, home: any })
             </header>
             <main className='flex justify-center items-center p-16 mb-auto'>
                 {children}
+                <Analytics />
             </main>
 
             <ScrollTop></ScrollTop>
