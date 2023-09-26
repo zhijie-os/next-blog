@@ -10,7 +10,7 @@ const ProjectData: ProjectProps[] = [
         title: "RealityCanvas",
         description: "Mobile AR sketching tool for creating dynamic scribble animations that respond to real-world motion and object movement. Offers a variety of animation techniques for expressive and versatile AR-based sketches. Designed to facilitate creation of AR-based sketches and enhance user experience.",
         imageUrl: "/teaser/reality-canvas.gif",
-        link: "https://www.youtube.com/watch?v=3P1uGJaSVfg"
+        link: "https://www.youtube.com/watch?v=UXKhkd3Briw&t=80s"
     },
     {
         title: "Knowd Board",
