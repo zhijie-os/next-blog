@@ -12,7 +12,7 @@ import ScrollTop from './scrollTop'
 export const siteTitle = "Zhijie Xia | UCalgary"
 
 export default function Layout({ children, home }: { children: any, home: any }) {
-    
+
     return (
         <div className="flex h-screen flex-col">
             <Head>
