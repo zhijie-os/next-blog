@@ -53,7 +53,7 @@ export default function Home() {
               height={size.height}
               alt="eight_six"
             ></Image>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col sm:grid sm:grid-cols-3 sm:gap-4">
               {/* introduction section  */}
               <div className="col-span-2">
                 <h1 className="text-4xl py-2 font-bold">
