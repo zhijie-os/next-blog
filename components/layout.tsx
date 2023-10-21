@@ -67,7 +67,7 @@ export default function Layout({ children, home }: { children: any, home: any })
                 )
                 }
             </header>
-            <main className='flex justify-center items-center p-16 mb-auto'>
+            <main className='flex justify-center items-center p-4 mb-auto'>
                 {children}
                 <Analytics />
             </main>
