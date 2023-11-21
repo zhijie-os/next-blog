@@ -20,7 +20,7 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="flex justify-center mb-2 flex space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex justify-center mb-2 space-x-2 text-sm text-gray-500 dark:text-gray-400">
                 <div>Zhijie Xia</div>
                 <div>{` • `}</div>
                 <div>{`© ${new Date().getFullYear()}`}</div>

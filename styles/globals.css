@@ -43,17 +43,15 @@ a:hover {
 
 @layer base {
   body {
-    @apply bg-slate-800;
+    @apply bg-neutral-50;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      @apply bg-neutral-900;
+    }
   }
 }
 
-/* 
-inline-code {
-  @apply rounded-md;
-  @apply bg-gray-400;
-  @apply underline;
-  @apply decoration-sky-500;
-} */
 
 .shrink-post {
   width: calc(100vw - 50px);
