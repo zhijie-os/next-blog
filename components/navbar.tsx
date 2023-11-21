@@ -16,7 +16,7 @@ export default function Navbar() {
                     />
                 </Link>
                 <Link href="/"><Image 
-                    src="/signature.svg" 
+                    src="/signature.svg"
                     alt="logo" 
                     width={144} 
                     height={144}

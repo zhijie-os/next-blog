@@ -48,7 +48,7 @@ export default function Home() {
           <div className="flex flex-col mx-auto">
             <Image
               className="rounded-md pb-10"
-              src="/images/86.gif"
+              src="/images/openning.png"
               width={size.width}
               height={size.height}
               alt="eight_six"
