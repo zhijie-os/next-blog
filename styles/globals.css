@@ -36,7 +36,6 @@ a:hover {
   }
 }
 
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -52,24 +51,38 @@ a:hover {
   }
 }
 
+.signature-toggle {
+
+}
+
+@media (prefers-color-scheme: light) {
+  .signature-toggle {
+    display: none;
+  }
+}
+
+
 
 .shrink-post {
   width: calc(100vw - 50px);
 }
 
-.post em, strong {
+.post em,
+strong {
   @apply text-slate-300;
   @apply font-bold;
   @apply mx-1;
 }
-
 
 .post a {
   @apply underline;
   @apply decoration-[#345A71];
 }
 
-.post h1,h2,h3,h4 {
+.post h1,
+h2,
+h3,
+h4 {
   @apply text-slate-300;
   @apply mb-4;
 }
@@ -87,7 +100,8 @@ a:hover {
   @apply text-gray-400;
 }
 
-.post p, ul {
+.post p,
+ul {
   @apply px-5;
 }
 

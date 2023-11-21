@@ -11,7 +11,17 @@ export default function Navbar() {
                     src="/signature-white.svg" 
                     alt="logo" 
                     width={144} 
-                    height={144}/>
+                    height={144}
+                    className="signature-toggle"
+                    />
+                </Link>
+                <Link href="/"><Image 
+                    src="/signature.svg" 
+                    alt="logo" 
+                    width={144} 
+                    height={144}
+                    className="dark:hidden"
+                    />
                 </Link>
                 {/* <h1 className="text-3xl text-white">Keep Coding!</h1> */}
             </div>
