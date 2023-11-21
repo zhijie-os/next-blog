@@ -61,7 +61,7 @@ export default function MobileNavbar() {
             <div key={link.title} className="px-12 py-4">
               <Link
                 href={link.href}
-                className="text-2xl font-bold tracking-widest text-gray-100"
+                className="text-2xl font-bold tracking-widest text-neutral-800 dark:text-neutral-200"
                 onClick={onToggleNav}
               >
                 {link.title}
