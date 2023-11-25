@@ -25,7 +25,7 @@ export default function Footer() {
                 <div>{` • `}</div>
                 <div>{`© ${new Date().getFullYear()}`}</div>
                 <div>{` • `}</div>
-                <Link href="/">zhijiexia.dev</Link>
+                <Link href="/">zhijiexia.org</Link>
             </div>
 
         </footer>
