@@ -15,7 +15,7 @@ function Hero() {
   
   return (
     <div
-      className="flex flex-col max-w-sm rounded-md bg-white p-5 text-slate-600 hover:shadow-lg hover:cursor-pointer"
+      className="container flex flex-col max-w-sm rounded-md bg-white p-5 m-5 text-slate-600 hover:shadow-lg hover:cursor-pointer"
       onClick={() => setShowModal(true)}
     >
       <div className="text-slate-900">
@@ -38,14 +38,23 @@ function Hero() {
 }
 
 export default function Publication() {
-
-
   return (
     <Layout home={false}>
       <Head>
         <title>Publication | Zhijie Xia</title>
       </Head>
-      <Hero></Hero>
+
+      <div className="flex flex-col max-w-4xl  divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="space-y-2 pt-6 pb-8 md:space-y-5">
+          <h1 className="text-3xl font-extrabold leading-tracking-tight text-gray-100 sm:leading-10 md:text-4xl md:leading-14">
+            Publication
+          </h1>
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+            Besides being a developer, I am also a researcher at Programmable Reality Lab.
+          </p>
+        </div>
+        <Hero></Hero>
+      </div>
     </Layout>
   );
 }
