@@ -28,6 +28,10 @@ const dates = [
     time: "Sepetember 2023 - Current",
     event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
   },
+  {
+    time: "December 2023 - Current",
+    event: "CEO & Co-founder at Gladiator Technologies, Hangzhou, China.",
+  }
 ];
 
 export default function Timeline() {
