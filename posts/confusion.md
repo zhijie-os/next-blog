@@ -1,0 +1,15 @@
+---
+title: 'Hello World: new dev blog in NextJS'
+date: '2022-12-29'
+---
+# Life Confusion
+Life does not make any sense at all. 
+
+It is just confusing. I do not know how 
+other people understand their life, but my life is so confusing to a point that 
+I do not understand.
+
+I feel the society does not want everyone to be successful, only a few privileged one could win this zero-sum game. It is a exploit machine where the rich always 
+hold the greatest power and the poor always suffer.
+
+It is fine, I never experienced a rich life, so I do not know how it feels like. It is okay for me to be poor and suffer. I am used to it.
