@@ -30,7 +30,7 @@ const dates = [
   },
   {
     time: "December 2023 - Current",
-    event: "CEO & Co-founder at Gladiator Technologies, Hangzhou, China.",
+    event: "CEO & Co-founder at Gladiator Technologies, Calgary, AB, Canada.",
   }
 ];
 
