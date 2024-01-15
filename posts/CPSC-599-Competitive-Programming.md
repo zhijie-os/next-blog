@@ -10,8 +10,9 @@ date: '2024-01-08'
 
 # Back to High School Physics  - UVA - 10071
 
+~~~python
 result = []
 for line in lines:
     v,t = line
     result.append(v*t*2)
-
+~~~
