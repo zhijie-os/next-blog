@@ -8,11 +8,20 @@ date: '2024-01-08'
 
 # Forming Quiz Teams
 
-# Back to High School Physics  - UVA - 10071
-
+# UVA 10071: Back to High School Physics
 ~~~python
 result = []
 for line in lines:
     v,t = line
     result.append(v*t*2)
 ~~~
+
+# Mon Jan 15, 2024
+
+## UVA 11462: Age sort
+
+no individual in the country lives for 100 or more years, finite range
+=> bucket sort
+
+## UVA 11933: Splitting Numbers
+
