@@ -58,15 +58,13 @@ export default function Home() {
               <div className="col-span-2">
                 <h1 className="text-4xl py-2 font-bold">
                   <span className="text-cyan-500">Zhijie Xia</span> is an
-                  undergraduate student, researcher at{" "}
-                  <Link className="underline" href={"https://www.ucalgary.ca/"}>
-                    University of Calgary
-                  </Link>
-                  , and firmware developer at{" "}
+                   software developer engineer at{" "}
                   <Link className="underline" href="https://thinklucid.com/">
                     Lucid Vision Labs
-                  </Link>
-                  .
+                  </Link> and  researcher at{" "}
+                  <Link className="underline" href={"https://www.ucalgary.ca/"}>
+                    University of Calgary
+                  </Link>.
                 </h1>
 
                 {/* student section  */}

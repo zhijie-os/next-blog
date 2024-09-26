@@ -11,7 +11,7 @@ const dates = [
       "Certified in Western Cultures and English at Zhejiang University (浙江大学).",
   },
   {
-    time: "2019 - Current",
+    time: "2019 - 2024",
     event:
       "Bachelor Program with First-class Honours (GPA 3.95/4) in Computer Science at the University of Calgary.",
   },
@@ -26,11 +26,11 @@ const dates = [
   },
   {
     time: "Sepetember 2023 - Current",
-    event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
+   event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
   },
   {
-    time: "December 2023 - Current",
-    event: "CEO & Co-founder at Gladiator Technologies, Calgary, AB, Canada.",
+    time: "Sepetember 2024 - Current",
+    event: "Software Development Engineer at Huawei, Hangzhou, Zhejiang, China.",
   }
 ];
 
