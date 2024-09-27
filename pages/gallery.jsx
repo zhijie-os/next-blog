@@ -2,7 +2,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { PhotoAlbum } from "react-photo-album";
 import "yet-another-react-lightbox/styles.css";
-
+import fs from 'fs';
+import path from 'path';
 import Lightbox from "yet-another-react-lightbox";
 import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Slideshow from "yet-another-react-lightbox/plugins/slideshow";
@@ -14,24 +15,17 @@ import Navbar from "../components/navbar";
 import Link from "next/link";
 import ScrollTop from "../components/scrollTop";
 import LinkBar from "../components/linkbar";
+import {CldImage} from 'next-cloudinary'
 
-import fs from "fs";
-import path from "path";
-const sizeOf = require("image-size");
 
-function NextJsImage({
+
+function CloudinaryImage({
   photo,
-  imageProps: { alt, title, sizes, className, onClick },
   wrapperStyle,
 }) {
   return (
     <div style={{ ...wrapperStyle, position: "relative" }}>
-      <Image
-        // fill
-        src={photo}
-        placeholder={"blurDataURL" in photo ? "blur" : undefined}
-        {...{ alt, title, sizes, className, onClick }}
-      />
+      <CldImage src={"photos/"+photo.src} width={photo.width} height={photo.height} alt={photo.src}/>
     </div>
   );
 }
@@ -92,7 +86,7 @@ export default function ImageGallery({ photos }) {
         className=""
         layout="rows"
         photos={photos}
-        renderPhoto={NextJsImage}
+        renderPhoto={CloudinaryImage}
         sizes={{
           size: "calc(100vw - 40px)",
           sizes: [
@@ -122,19 +116,34 @@ export default function ImageGallery({ photos }) {
 }
 
 
-// prepare a list of image source, width and height
-export async function getStaticProps() {
-  const photoDirectory = path.join(process.cwd(), "public/photos");
-  const photoFiles = fs.readdirSync(photoDirectory);
-  const photos = photoFiles.map((photo) => {
-    const filePath = `/photos/${photo}`;
-    const dimensions = sizeOf("public" + filePath);
-    return {
-      src: filePath,
-      width: dimensions.width,
-      height: dimensions.height,
-    };
-  }).reverse();
 
-  return { props: { photos } };
+export async function getStaticProps() {
+  try {
+    // Define the path to the `images.txt` file
+    const filePath = path.join(process.cwd(), '', 'images.txt');
+        
+    // Read the contents of the `images.txt` file
+    const data = fs.readFileSync(filePath, 'utf8');
+    
+    // Split the content by line and parse each line (format: filename, width, height)
+    const photos = data.split('\n').map(line => {
+      const [src, width, height] = line.split(',').map(item => item.trim());
+      
+      if (src && width && height) {
+        return {
+          src,
+          width: parseInt(width, 10),
+          height: parseInt(height, 10),
+        };
+      }
+      return null;
+    }).filter(Boolean);  // Filter out any null values for invalid lines
+
+    // Reverse the order of the photos array or any other transformation
+    return { props: { photos: photos.reverse() } };
+
+  } catch (error) {
+    console.error('Error fetching images metadata.', error);
+    return { props: { photos: [] } };  // Fallback if something goes wrong
+  }
 }
