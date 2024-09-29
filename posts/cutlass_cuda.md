@@ -1,4 +1,7 @@
-# Cuda implementation for mutiplication to illustrate CUTLASS
+---
+title: 'Cuda implementation for mutiplication to illustrate CUTLASS'
+date: '2024-09-29'
+---
 
 ```
 #include <stdio.h>
