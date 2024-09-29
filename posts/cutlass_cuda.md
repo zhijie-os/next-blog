@@ -3,154 +3,143 @@ title: 'Cuda implementation for mutiplication to illustrate CUTLASS'
 date: '2024-09-29'
 ---
 
-```
-#include <stdio.h>
+~~~c
 
-__global__ void innerProduct(float *A, float *B, float *C, int N) {
-    __shared__ float temp[256];  // Shared memory for partial results
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    int thread_id = threadIdx.x;
-    temp[thread_id] = 0;
+#include <iostream>
+#include <cuda_runtime.h>
 
-    if (tid < N) {
-        temp[thread_id] = A[tid] * B[tid];
-    }
-
-    // Synchronize threads in the block
-    __syncthreads();
-
-    // Reduce results within the block
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
-        if (thread_id < stride) {
-            temp[thread_id] += temp[thread_id + stride];
-        }
-        __syncthreads();
-    }
-
-    // Accumulate block results in global memory
-    if (thread_id == 0) {
-        atomicAdd(C, temp[0]);
+__global__ void inner_product_kernel(float *a, float *b, float *c, int N) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    if (index < N) {
+        atomicAdd(c, a[index] * b[index]);
     }
 }
 
 int main() {
-    int N = 1024;
-    float *A, *B, *C;
-    float *d_A, *d_B, *d_C;
+    int N = 1000000;  // Large vector size
 
-    // Allocate host memory
-    A = (float*)malloc(N * sizeof(float));
-    B = (float*)malloc(N * sizeof(float));
-    C = (float*)malloc(sizeof(float));
-    *C = 0;
+    // Host memory allocation
+    float *h_a, *h_b, h_c = 0;
+    h_a = (float*)malloc(N * sizeof(float));
+    h_b = (float*)malloc(N * sizeof(float));
 
-    // Initialize vectors
+    // Initialize vectors with random values
     for (int i = 0; i < N; i++) {
-        A[i] = i + 1;
-        B[i] = i + 1;
+        h_a[i] = static_cast<float>(rand()) / RAND_MAX;
+        h_b[i] = static_cast<float>(rand()) / RAND_MAX;
     }
 
-    // Allocate device memory
-    cudaMalloc((void**)&d_A, N * sizeof(float));
-    cudaMalloc((void**)&d_B, N * sizeof(float));
-    cudaMalloc((void**)&d_C, sizeof(float));
+    // Device memory allocation
+    float *d_a, *d_b, *d_c;
+    cudaMalloc((void**)&d_a, N * sizeof(float));
+    cudaMalloc((void**)&d_b, N * sizeof(float));
+    cudaMalloc((void**)&d_c, sizeof(float));
 
-    // Copy data to device
-    cudaMemcpy(d_A, A, N * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, B, N * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_C, C, sizeof(float), cudaMemcpyHostToDevice);
+    // Copy vectors to device
+    cudaMemcpy(d_a, h_a, N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b, N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_c, &h_c, sizeof(float), cudaMemcpyHostToDevice);
 
-    // Launch kernel with 256 threads per block
+    // Kernel configuration
     int blockSize = 256;
     int numBlocks = (N + blockSize - 1) / blockSize;
-    innerProduct<<<numBlocks, blockSize>>>(d_A, d_B, d_C, N);
+
+    // Launch kernel
+    inner_product_kernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, N);
 
     // Copy result back to host
-    cudaMemcpy(C, d_C, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_c, d_c, sizeof(float), cudaMemcpyDeviceToHost);
 
-    printf("Inner Product: %f\n", *C);
+    // Print result
+    std::cout << "Inner product: " << h_c << std::endl;
 
     // Free memory
-    cudaFree(d_A);
-    cudaFree(d_B);
-    cudaFree(d_C);
-    free(A);
-    free(B);
-    free(C);
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+    free(h_a);
+    free(h_b);
 
     return 0;
 }
-```
+
+~~~
 
 and 
-```
-#include <stdio.h>
 
-#define M 4  // Number of rows in A
-#define N 4  // Number of columns in B
-#define K 4  // Common dimension (columns of A, rows of B)
+~~~c
 
-__global__ void matrixMultiplyOuterProduct(float *A, float *B, float *C) {
-    int row = threadIdx.y;
-    int col = threadIdx.x;
+#include <iostream>
+#include <cuda_runtime.h>
 
-    // Each thread computes a partial sum for C[row][col]
-    float sum = 0;
-    for (int k = 0; k < K; k++) {
-        sum += A[row * K + k] * B[k * N + col];
+#define M 1024  // Rows of A and C
+#define N 1024  // Columns of B and C
+#define K 1024  // Columns of A and rows of B
+
+__global__ void outer_product_kernel(float *A, float *B, float *C) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < M && col < N) {
+        float value = 0;
+        for (int k = 0; k < K; ++k) {
+            value += A[row * K + k] * B[k * N + col];
+        }
+        C[row * N + col] = value;
     }
-
-    C[row * N + col] = sum;
 }
 
 int main() {
-    // Host matrices
-    float A[M * K] = {1, 2, 3, 4,
-                      5, 6, 7, 8,
-                      9, 10, 11, 12,
-                      13, 14, 15, 16};
-    
-    float B[K * N] = {1, 2, 3, 4,
-                      5, 6, 7, 8,
-                      9, 10, 11, 12,
-                      13, 14, 15, 16};
+    // Host memory allocation
+    float *h_A, *h_B, *h_C;
+    h_A = (float*)malloc(M * K * sizeof(float));
+    h_B = (float*)malloc(K * N * sizeof(float));
+    h_C = (float*)malloc(M * N * sizeof(float));
 
-    float C[M * N] = {0};  // Output matrix C
+    // Initialize matrices A and B with random values, and C to zero
+    for (int i = 0; i < M * K; i++) {
+        h_A[i] = static_cast<float>(rand()) / RAND_MAX;
+    }
+    for (int i = 0; i < K * N; i++) {
+        h_B[i] = static_cast<float>(rand()) / RAND_MAX;
+    }
+    for (int i = 0; i < M * N; i++) {
+        h_C[i] = 0.0f; // initialize C to zero
+    }
 
+    // Device memory allocation
     float *d_A, *d_B, *d_C;
-
-    // Allocate device memory
     cudaMalloc((void**)&d_A, M * K * sizeof(float));
     cudaMalloc((void**)&d_B, K * N * sizeof(float));
     cudaMalloc((void**)&d_C, M * N * sizeof(float));
 
-    // Copy data to device
-    cudaMemcpy(d_A, A, M * K * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, B, K * N * sizeof(float), cudaMemcpyHostToDevice);
+    // Copy matrices to device
+    cudaMemcpy(d_A, h_A, M * K * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, K * N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_C, h_C, M * N * sizeof(float), cudaMemcpyHostToDevice);
 
-    // Define block and grid size
-    dim3 threadsPerBlock(N, M);  // Each thread computes one element of the matrix
-    dim3 numBlocks(1, 1);
+    // Kernel configuration
+    dim3 threadsPerBlock(16, 16);
+    dim3 numBlocks((N + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                   (M + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
     // Launch kernel
-    matrixMultiplyOuterProduct<<<numBlocks, threadsPerBlock>>>(d_A, d_B, d_C);
+    outer_product_kernel<<<numBlocks, threadsPerBlock>>>(d_A, d_B, d_C);
 
     // Copy result back to host
-    cudaMemcpy(C, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_C, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
 
-    printf("Matrix C (Result of A * B):\n");
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            printf("%f ", C[i * N + j]);
-        }
-        printf("\n");
-    }
+    // Print part of the result to verify (e.g., the first element)
+    std::cout << "Outer product result (C[0][0]): " << h_C[0] << std::endl;
 
     // Free memory
     cudaFree(d_A);
     cudaFree(d_B);
     cudaFree(d_C);
+    free(h_A);
+    free(h_B);
+    free(h_C);
 
     return 0;
 }
-```
+~~~
