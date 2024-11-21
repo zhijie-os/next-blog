@@ -25,7 +25,7 @@ const dates = [
     event: "Full-stack Developer at Knowd, Toronto, ON, Canada.",
   },
   {
-    time: "Sepetember 2023 - Current",
+    time: "Sepetember 2023 - Sepetember 2024",
    event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
   },
   {
