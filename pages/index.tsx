@@ -48,7 +48,7 @@ export default function Home() {
           <div className="flex flex-col mx-auto">
             <Image
               className="rounded-md pb-10"
-              src="/images/openning.png"
+              src="/images/openning.webp"
               width={size.width}
               height={size.height}
               alt="eight_six"
@@ -59,8 +59,8 @@ export default function Home() {
                 <h1 className="text-4xl py-2 font-bold">
                   <span className="text-cyan-500">Zhijie Xia</span> is an
                    software developer engineer at{" "}
-                  <Link className="underline" href="https://thinklucid.com/">
-                    Lucid Vision Labs
+                  <Link className="underline" href="https://www.huawei.com/en/">
+                    Huawei
                   </Link> and  researcher at{" "}
                   <Link className="underline" href={"https://www.ucalgary.ca/"}>
                     University of Calgary
