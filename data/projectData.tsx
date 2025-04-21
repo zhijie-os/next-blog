@@ -13,17 +13,17 @@ const ProjectData: ProjectProps[] = [
         link: "https://www.youtube.com/watch?v=UXKhkd3Briw&t=80s"
     },
     {
+        title: "RealityEffects",
+        description: "Desktop authoring interface designed for editing and augmenting 3D volumetric videos with object-centric annotations and visual effects",
+        imageUrl: "/teaser/RealityEffects.gif",
+        link: "https://www.youtube.com/watch?v=5x45I-eXqBk"
+    },
+    {
         title: "Knowd Board",
         description: "Web tool which enables organizations with programmable knowledge infrastructure for automated information sharing, insights discovery, and seamless knowledge flows.",
         imageUrl: "/teaser/knowd-board.gif",
         link: "app.knowd.ai"
-    },
-    {
-        title: "The Witching Knight",
-        description: "2D top-down shooting game in JavaFX. Players navigate through levels, defeat enemies, and complete objectives using a variety of weapons and power-ups. Features single-player campaign mode and multiplayer mode. May include boss battles and a leveling system.",
-        imageUrl: "/teaser/the-witching-knight.gif",
-        link: "https://github.com/zhijie-os/The-Witching-Knight"
-    },
+    }
 ]
 
 export {ProjectData}

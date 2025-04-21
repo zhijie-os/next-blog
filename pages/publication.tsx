@@ -5,8 +5,8 @@ import { Worker } from "@react-pdf-viewer/core";
 import Modal from "../components/modal";
 import { useEffect, useState } from "react";
 
-
-function Hero() {
+//@ts-ignore
+function Hero({ title, conference, imageUrl, pdfUrl}) {
   const [showModal, setShowModal] = useState(false);
 
   const updateShowModal = () => {
@@ -16,23 +16,22 @@ function Hero() {
   return (
     <div
       className="container flex flex-col max-w-sm rounded-md bg-white p-5 m-5 text-slate-600 hover:shadow-lg hover:cursor-pointer"
-      onClick={() => setShowModal(true)}
+      onClick={(() => setShowModal(true))}
     >
       <div className="text-slate-900">
-        RealityCanvas: Augmented Reality Sketching for Embedded and Responsive
-        Scribble Animation Effects
+        {title}
       </div>
       <div className="text-slate-900">
-        <small>UIST 2023</small>
+        <small>{conference}</small>
       </div>
       <Image
         className="rounded object-cover object-center md:h-36 lg:h-48"
-        src={"/teaser/reality-canvas.gif"}
-        alt={"RealityCanvas"}
+        src={imageUrl}
+        alt={title}
         width={400}
         height={400}
       />
-      <Modal showModal={showModal} updateShowModal={updateShowModal} />
+      <Modal showModal={showModal} updateShowModal={updateShowModal} title={title} pdfUrl={pdfUrl}/>
     </div>
   );
 }
@@ -50,10 +49,23 @@ export default function Publication() {
             Publication
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            Besides being a developer, I am also a researcher at Programmable Reality Lab.
+            Previous publications in Programmable Reality Lab
           </p>
         </div>
-        <Hero></Hero>
+        <div className="flex flex-wrap">
+          <Hero 
+            title="RealityCanvas: Augmented Reality Sketching for Embedded and Responsive Scribble Animation Effects"
+            conference="UIST 2023"
+            imageUrl="/teaser/reality-canvas.gif"
+            pdfUrl="reality-canvas.pdf"
+          />
+          <Hero 
+            title="RealityEffects: Augmenting 3D Volumetric Videos with Object-Centric Annotation and Dynamic Visual Effects"
+            conference="DIS 2024"
+            imageUrl="/teaser/RealityEffects.gif"
+            pdfUrl="RealityEffects.pdf"
+          />
+        </div>
       </div>
     </Layout>
   );
