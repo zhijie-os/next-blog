@@ -13,7 +13,7 @@ const dates = [
   {
     time: "2019 - 2024",
     event:
-      "Bachelor Program with First-class Honours (GPA 3.95/4) in Computer Science at the University of Calgary.",
+      "Bachelor Program with First-class Honours (GPA 3.92/4) in Computer Science at the University of Calgary.",
   },
   {
     time: "April 2022 - Current",
@@ -22,7 +22,7 @@ const dates = [
   },
   {
     time: "June 2023 - August 2023",
-    event: "Full-stack Developer at Knowd, Toronto, ON, Canada.",
+    event: "Full-stack Developer at New Technologies, Toronto, ON, Canada.",
   },
   {
     time: "Sepetember 2023 - Sepetember 2024",
