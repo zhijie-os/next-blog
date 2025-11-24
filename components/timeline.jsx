@@ -16,7 +16,7 @@ const dates = [
       "Bachelor Program with First-class Honours (GPA 3.92/4) in Computer Science at the University of Calgary.",
   },
   {
-    time: "April 2022 - Current",
+    time: "April 2022 - September 2023",
     event:
       "Mixed Reality Researcher at Programmable Reality Lab, Calgary, AB, Canada.",
   },
