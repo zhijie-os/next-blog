@@ -25,28 +25,33 @@ const dates = [
     event: "Full-stack Developer at New Technologies, Toronto, ON, Canada.",
   },
   {
-    time: "Sepetember 2023 - Sepetember 2024",
-   event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
+    time: "September 2023 - September 2024",
+    event: "Test & Firmware Developer at Lucid Vision Labs, Richmond, BC, Canada.",
   },
   {
-    time: "Sepetember 2024 - Current",
-    event: "Software Development Engineer at Huawei, Hangzhou, Zhejiang, China.",
+    time: "September 2024 - November 2025",
+    event: "AI Infrastructure Engineer at Huawei, Hangzhou, Zhejiang, China.",
+  },
+  {
+    time: "November 2025 - Present",
+    event: "Applied RL for LLM Researcher at Huawei, Hangzhou, Zhejiang, China.",
   }
 ];
 
 export default function Timeline() {
+  // Create a reversed copy of the dates array
+  const reversedDates = [...dates].reverse();
 
   return (
     <div className="mx-auto p-3 text-left md:text-center">
       <ol className="relative border-l border-gray-200 dark:border-gray-700">
-        {dates.map((item, index) => (
+        {reversedDates.map((item, index) => (
           <li className="mb-5 ml-4" key={index}>
             <div className="absolute w-3 h-3 bg-gray-200 rounded-full mt-1.5 -left-1.5 border border-white dark:border-gray-900 dark:bg-gray-700"></div>
             <time className="mb text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
               {item.time}
             </time>
-            {/* <h3 className="text-lg text-gray-900 dark:text-white">University of Calgary</h3> */}
-            <p className="text-base  font-normal text-gray-500 dark:text-gray-200">
+            <p className="text-base font-normal text-gray-500 dark:text-gray-200">
               {item.event}
             </p>
           </li>
