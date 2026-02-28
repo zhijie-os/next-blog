@@ -50,10 +50,10 @@ export default function ImageGallery({ photos }) {
                   alt=""
                 ></Image>
               </div>
-              <div className="flex ml-2">
+              {/* <div className="flex ml-2">
                 “That which we need the most will be found where we least want
                 to look.” - Carl Jung.
-              </div>
+              </div> */}
 
               <LinkBar></LinkBar>
             </div>
@@ -73,10 +73,10 @@ export default function ImageGallery({ photos }) {
                   />
                 </Link>
               </div>
-              <div className="flex ml-2">
+              {/* <div className="flex ml-2">
                 “That which we need the most will be found where we least want
                 to look.” - Carl Jung.
-              </div>
+              </div> */}
             </div>
           </>
         )}
@@ -114,8 +114,6 @@ export default function ImageGallery({ photos }) {
     </div>
   );
 }
-
-
 
 export async function getStaticProps() {
   try {

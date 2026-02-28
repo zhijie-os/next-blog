@@ -49,10 +49,10 @@ export default function Layout({
                   alt=""
                 ></Image>
               </div>
-              <div className="flex ml-2">
+              {/* <div className="flex ml-2">
                 “That which we need the most will be found where we least want
                 to look.” - Carl Jung.
-              </div>
+              </div> */}
 
               <LinkBar></LinkBar>
             </div>
@@ -72,10 +72,10 @@ export default function Layout({
                   />
                 </Link>
               </div>
-              <div className="flex ml-2">
+              {/* <div className="flex ml-2">
                 “That which we need the most will be found where we least want
                 to look.” - Carl Jung.
-              </div>
+              </div> */}
             </div>
           </>
         )}
