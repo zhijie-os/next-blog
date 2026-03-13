@@ -4,8 +4,15 @@ import Image from "next/image";
 import Modal from "../components/modal";
 import { useState } from "react";
 
+interface PublicationCardProps {
+  title: string;
+  conference: string;
+  imageUrl: string;
+  onClick?: () => void; // Made optional with ? since it might not always be provided
+}
+
 // Publication Card Component
-function PublicationCard({ title, conference, imageUrl, onClick }) {
+function PublicationCard({ title, conference, imageUrl, onClick }: PublicationCardProps) {
   return (
     <div
       className="group flex flex-col h-full rounded-xl bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-800 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
