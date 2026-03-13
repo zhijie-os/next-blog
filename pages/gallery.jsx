@@ -36,51 +36,6 @@ export default function ImageGallery({ photos }) {
   return (
     <div>
       <Navbar></Navbar>
-      <header className="flex justify-center mb-4">
-        {home ? (
-          <>
-            <div className="flex flex-col">
-              <div className="flex justify-center m-1">
-                <Image
-                  priority
-                  src="/images/avatar.jpg"
-                  className="rounded-full"
-                  height={144}
-                  width={144}
-                  alt=""
-                ></Image>
-              </div>
-              {/* <div className="flex ml-2">
-                “That which we need the most will be found where we least want
-                to look.” - Carl Jung.
-              </div> */}
-
-              <LinkBar></LinkBar>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col">
-              <div className="flex justify-center m-1">
-                <Link href="/">
-                  <Image
-                    priority
-                    className="rounded-full"
-                    src="/images/avatar.png"
-                    height={88}
-                    width={88}
-                    alt=""
-                  />
-                </Link>
-              </div>
-              {/* <div className="flex ml-2">
-                “That which we need the most will be found where we least want
-                to look.” - Carl Jung.
-              </div> */}
-            </div>
-          </>
-        )}
-      </header>
 
       <PhotoAlbum
         className=""
