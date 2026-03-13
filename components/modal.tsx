@@ -1,6 +1,8 @@
 import { Worker } from "@react-pdf-viewer/core";
 import { Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom"; // 1. Import createPortal
 
 type ModalProps = {
     showModal: boolean;
@@ -10,38 +12,61 @@ type ModalProps = {
 }
 
 export default function Modal({ showModal, updateShowModal, title, pdfUrl }: ModalProps) {
-    if (!showModal) {
-        return null;
-    }
+    const [mounted, setMounted] = useState(false);
 
-    return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-            <div className="relative top-20 mx-auto p-5 w-98 shadow-lg rounded-md ">
-            <div className="relative top-20 mx-auto p-5 border w-[70%] max-w-4xl shadow-lg rounded-md bg-white">
-              <div className="mt-3 text-center">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
+    // 2. Ensure we only render on the client side
+    useEffect(() => {
+        setMounted(true);
+        if (showModal) {
+            // Optional: Prevent background scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showModal]);
 
+    if (!showModal || !mounted) return null;
+
+    // 3. Define the Modal JSX
+    const modalJSX = (
+        /* z-[100] ensures it is above the Navbar (usually z-40 or z-50).
+           fixed inset-0 ensures it covers the entire viewport.
+        */
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop: click to close */}
+            <div 
+                className="absolute inset-0 bg-black bg-opacity-70 transition-opacity" 
+                onClick={updateShowModal}
+            />
+
+            {/* Modal Container */}
+            <div className="relative bg-white w-full max-w-5xl h-[90vh] shadow-2xl rounded-xl overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 truncate pr-4">{title}</h3>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); updateShowModal() }} 
+                        className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* PDF Viewer Area */}
+                <div className="flex-1 bg-gray-100 overflow-auto">
                     <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-                        <div style={{
-                            border: '1px solid rgba(0, 0, 0, 0.3)',
-                            height: '750px',
-                        }}>
+                        <div className="h-full w-full">
                             <Viewer fileUrl={pdfUrl} />
                         </div>
                     </Worker>
-
-                    <div className="items-center px-4 py-3">
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); updateShowModal() }} 
-                            className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                        >
-                            Close
-                        </button>
-                    </div>
                 </div>
             </div>
-                
-            </div>
         </div>
-    )
+    );
+
+    // 4. Use createPortal to inject the modal at the end of <body>
+    return createPortal(modalJSX, document.body);
 }
