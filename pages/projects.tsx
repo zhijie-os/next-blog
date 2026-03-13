@@ -15,9 +15,6 @@ export default function Projects() {
           <h1 className="text-3xl font-extrabold leading-tracking-tight text-gray-100 sm:leading-10 md:text-4xl md:leading-14">
             Projects
           </h1>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            Welcome to my project gallery, here I showcase some of my projects on my way to become a 100X engineer.
-          </p>
         </div>
 
         {/* map each project data to a project card */}
