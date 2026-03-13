@@ -58,16 +58,22 @@ export default function ResearchAndProjects() {
           
           <div className="flex flex-wrap justify-center md:justify-start pt-8">
             <PublicationCard 
-              title="RealityCanvas: Augmented Reality Sketching for Embedded and Responsive Scribble Animation Effects"
-              conference="ACM UIST 2023"
-              imageUrl="/teaser/reality-canvas.gif"
-              pdfUrl="reality-canvas.pdf"
+              title="ACRL: Adaptive Control of Training-Inference Discrepancy for Stable Reinforcement Learning"
+              conference="ICML 2026"
+              imageUrl="/teaser/ACRL.png"
+              pdfUrl="ACRL.pdf"
             />
             <PublicationCard 
               title="RealityEffects: Augmenting 3D Volumetric Videos with Object-Centric Annotation and Dynamic Visual Effects"
-              conference="ACM DIS 2024"
+              conference="DIS 2024"
               imageUrl="/teaser/RealityEffects.gif"
               pdfUrl="RealityEffects.pdf"
+            />
+            <PublicationCard 
+              title="RealityCanvas: Augmented Reality Sketching for Embedded and Responsive Scribble Animation Effects"
+              conference="UIST 2023"
+              imageUrl="/teaser/reality-canvas.gif"
+              pdfUrl="reality-canvas.pdf"
             />
           </div>
         </section>
