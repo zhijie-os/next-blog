@@ -3,7 +3,7 @@ import Link from "next/link";
 const headerNavLinks: { title: string; href: string }[] = [
   { title: "HOME", href: "/" },
   { title: "BLOG", href: "/posts" },
-  { title: "Research and Project", href: "/pp" },
+  { title: "PUBLICATION", href: "/publication" },
 ];
 import Image from "next/image";
 export default function MobileNavbar() {
