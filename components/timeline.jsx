@@ -38,7 +38,7 @@ const dates = [
   },
   {
     time: "September 2026 - Present",
-    event: "Incoming Master of Computing Science (Thesis) for Reinforcement Learning, Edmonton, Alberta, Canada.",
+    event: "Incoming Master of Computing Science (Thesis), Edmonton, AB, Canada.",
   }
 ];
 
