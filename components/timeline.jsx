@@ -35,6 +35,10 @@ const dates = [
   {
     time: "November 2025 - Present",
     event: "Applied RL for LLM Researcher at Huawei, Hangzhou, Zhejiang, China.",
+  },
+  {
+    time: "September 2026 - Present",
+    event: "Incoming Master of Computing Science (Thesis) for Reinforcement Learning, Edmonton, Alberta, Canada.",
   }
 ];
 
