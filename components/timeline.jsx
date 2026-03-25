@@ -18,7 +18,7 @@ const dates = [
   {
     time: "April 2022 - September 2023",
     event:
-      "Mixed Reality Researcher at Programmable Reality Lab, Calgary, AB, Canada.",
+      "Mixed Reality Researcher at Programmable Reality Lab under Dr. Ryo Suzuki, Calgary, AB, Canada.",
   },
   {
     time: "June 2023 - August 2023",
@@ -38,7 +38,7 @@ const dates = [
   },
   {
     time: "September 2026 (Incoming)",
-    event: "Master of Computing Science (Thesis) under Dr. Rupam Mahmood, Edmonton, AB, Canada.",
+    event: "Master of Computing Science (Thesis) for reinforcement learning under Dr. Rupam Mahmood, Edmonton, AB, Canada.",
   }
 ];
 
