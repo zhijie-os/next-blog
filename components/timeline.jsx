@@ -37,8 +37,8 @@ const dates = [
     event: "Applied RL for LLM Researcher at Huawei, Hangzhou, Zhejiang, China.",
   },
   {
-    time: "September 2026 - Present",
-    event: "Incoming Master of Computing Science (Thesis), Edmonton, AB, Canada.",
+    time: "September 2026 (Incoming)",
+    event: "Master of Computing Science (Thesis) under Dr. Rupam Mahmood, Edmonton, AB, Canada.",
   }
 ];
 
