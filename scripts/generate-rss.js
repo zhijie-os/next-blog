@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
 
-const SITE_URL = 'https://zhijiexia.org';
+const SITE_URL = 'https://zhijiexia.dev';
 const SITE_TITLE = 'Zhijie Xia';
 const SITE_DESCRIPTION = 'Technical blog about LeetCode, CUDA, reinforcement learning, DevOps, and competitive programming.';
 

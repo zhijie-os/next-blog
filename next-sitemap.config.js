@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-    siteUrl: process.env.SITE_URL || 'https://zhijiexia.org',
+    siteUrl: process.env.SITE_URL || 'https://zhijiexia.dev',
     generateRobotsTxt: false,
     changefreq: 'weekly',
     priority: 0.5,

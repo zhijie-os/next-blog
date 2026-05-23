@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zhijiexia.org/sitemap.xml
+Sitemap: https://zhijiexia.dev/sitemap.xml

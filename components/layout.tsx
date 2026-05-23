@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import ScrollTop from "./scrollTop";
 
 export const siteTitle = "Zhijie Xia";
-export const siteUrl = "https://zhijiexia.org";
+export const siteUrl = "https://zhijiexia.dev";
 export const defaultDescription = "Zhijie Xia — AI Infrastructure Engineer & Researcher, incoming MSc student at University of Alberta.";
 
 interface LayoutProps {

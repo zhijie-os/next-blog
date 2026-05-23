@@ -88,7 +88,7 @@ export default function Home() {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: 'Zhijie Xia',
-    url: 'https://zhijiexia.org',
+    url: 'https://zhijiexia.dev',
     jobTitle: 'AI Infrastructure Engineer & Researcher',
     alumniOf: [
       { '@type': 'CollegeOrUniversity', name: 'University of Calgary' },
