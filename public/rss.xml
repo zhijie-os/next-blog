@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Zhijie Xia</title>
+    <link>https://zhijiexia.org</link>
+    <description>Technical blog about LeetCode, CUDA, reinforcement learning, DevOps, and competitive programming.</description>
+    <language>en</language>
+    <atom:link href="https://zhijiexia.org/rss.xml" rel="self" type="application/rss+xml"/>
+    
+    <item>
+      <title>Address off-policy training in VERL</title>
+      <link>https://zhijiexia.org/posts/verl-problem</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/verl-problem</guid>
+      <pubDate>Sat, 01 Nov 2025 00:00:00 GMT</pubDate>
+      <description>Addressing off-policy training challenges in VERL for reinforcement learning with LLMs.</description>
+    </item>
+    <item>
+      <title>Cuda implementation for mutiplication to illustrate CUTLASS</title>
+      <link>https://zhijiexia.org/posts/cutlass_cuda</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/cutlass_cuda</guid>
+      <pubDate>Sun, 29 Sep 2024 00:00:00 GMT</pubDate>
+      <description>A deep dive into CUDA matrix multiplication and how CUTLASS optimizes GPU kernels.</description>
+    </item>
+    <item>
+      <title>CPSC 599 Competitive Programming</title>
+      <link>https://zhijiexia.org/posts/CPSC-599-Competitive-Programming</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/CPSC-599-Competitive-Programming</guid>
+      <pubDate>Mon, 08 Jan 2024 00:00:00 GMT</pubDate>
+      <description>Course notes and problem-solving strategies from CPSC 599 Competitive Programming at the University of Calgary.</description>
+    </item>
+    <item>
+      <title>September 2023 Daily Leetcode: Grind 75 in Python</title>
+      <link>https://zhijiexia.org/posts/2023-09</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/2023-09</guid>
+      <pubDate>Wed, 27 Sep 2023 00:00:00 GMT</pubDate>
+      <description>Working through the Grind 75 LeetCode problems in Python during September 2023.</description>
+    </item>
+    <item>
+      <title>Crash course on tmux</title>
+      <link>https://zhijiexia.org/posts/tmux</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/tmux</guid>
+      <pubDate>Mon, 21 Aug 2023 00:00:00 GMT</pubDate>
+      <description>A quick reference guide and crash course on using tmux for terminal multiplexing.</description>
+    </item>
+    <item>
+      <title>Feb 2023 Daily Leetcode: Leetcode in C++/RUST</title>
+      <link>https://zhijiexia.org/posts/2023-02</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/2023-02</guid>
+      <pubDate>Sat, 25 Feb 2023 00:00:00 GMT</pubDate>
+      <description>Daily LeetCode problems solved in C++ and Rust throughout February 2023.</description>
+    </item>
+    <item>
+      <title>Advent of Code 2022</title>
+      <link>https://zhijiexia.org/posts/AoC-2022</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/AoC-2022</guid>
+      <pubDate>Wed, 22 Feb 2023 00:00:00 GMT</pubDate>
+      <description>My solutions and walkthroughs for Advent of Code 2022 challenges.</description>
+    </item>
+    <item>
+      <title>Jan 2023 Daily Leetcode: Leetcode in Rust/C++</title>
+      <link>https://zhijiexia.org/posts/2023-01</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/2023-01</guid>
+      <pubDate>Tue, 31 Jan 2023 00:00:00 GMT</pubDate>
+      <description>Daily LeetCode problems solved in Rust and C++ throughout January 2023.</description>
+    </item>
+    <item>
+      <title>Hello World: new dev blog in NextJS</title>
+      <link>https://zhijiexia.org/posts/hello-world</link>
+      <guid isPermaLink="true">https://zhijiexia.org/posts/hello-world</guid>
+      <pubDate>Thu, 29 Dec 2022 00:00:00 GMT</pubDate>
+      <description>Welcome to my newly redesigned personal developer blog built with NextJS.</description>
+    </item>
+  </channel>
+</rss>

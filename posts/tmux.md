@@ -1,6 +1,8 @@
 ---
 title: 'Crash course on tmux'
 date: '2023-08-21'
+tags: ['devops', 'terminal', 'tmux', 'productivity']
+description: 'A quick reference guide and crash course on using tmux for terminal multiplexing.'
 ---
 
 

@@ -1,74 +1,76 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-// import { remark } from 'remark'
-// import html from 'remark-html'
-// import React from 'react';
-// import ReactMarkdown from 'react-markdown';
-
-
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
+function computeReadingTime(content: string): number {
+  const words = content.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.round(words / 200))
+}
+
 export function getSortedPostsData() {
-  // Get file names under /posts
   const fileNames = fs.readdirSync(postsDirectory)
-  const allPostsData = fileNames.map(fileName => {
-    // Remove ".md" from file name to get id
-    const id = fileName.replace(/\.md$/, '')
+  const allPostsData = fileNames
+    .map(fileName => {
+      const id = fileName.replace(/\.md$/, '')
+      const fullPath = path.join(postsDirectory, fileName)
+      const fileContents = fs.readFileSync(fullPath, 'utf8')
+      const matterResult = matter(fileContents)
 
-    // Read markdown file as string
-    const fullPath = path.join(postsDirectory, fileName)
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
+      return {
+        id,
+        ...matterResult.data,
+        content: matterResult.content,
+      }
+    })
+    .filter((post: any) => !post.draft)
 
-    // Use gray-matter to parse the post metadata section
-    const matterResult = matter(fileContents)
-
-    // Combine the data with the id
-    return {
-      id,
-      ...matterResult.data
-    }
-  })
-  // Sort posts by date
-  return allPostsData.sort((a, b) => {
-    //@ts-ignore
-    if (a.date < b.date) {
-      return 1
-    } else {
-      return -1
-    }
-  })
+  return allPostsData
+    .map((post: any) => {
+      const { content, ...rest } = post
+      return {
+        ...rest,
+        readingTime: computeReadingTime(content),
+      }
+    })
+    .sort((a: any, b: any) => {
+      if (a.date < b.date) {
+        return 1
+      } else {
+        return -1
+      }
+    })
 }
 
 export function getAllPostIds() {
   const fileNames = fs.readdirSync(postsDirectory)
-  return fileNames.map(fileName => {
-    return {
-      params: {
-        id: fileName.replace(/\.md$/, '')
+  return fileNames
+    .map(fileName => {
+      const id = fileName.replace(/\.md$/, '')
+      const fullPath = path.join(postsDirectory, fileName)
+      const fileContents = fs.readFileSync(fullPath, 'utf8')
+      const matterResult = matter(fileContents)
+      // Skip draft posts
+      if (matterResult.data.draft) return null
+      return {
+        params: { id }
       }
-    }
-  })
+    })
+    .filter(Boolean)
 }
 
-export async function getPostData(id:string) {
+export async function getPostData(id: string) {
   const fullPath = path.join(postsDirectory, `${id}.md`)
   const fileContents = fs.readFileSync(fullPath, 'utf8')
 
-  // Use gray-matter to parse the post metadata section
   const matterResult = matter(fileContents)
-
-  // Use remark to convert markdown into HTML string
-  // const processedContent = await remark()
-  //   .use(html)
-  //   .process(matterResult.content)
   const content = matterResult.content
 
-  // Combine the data with the id and contentHtml
   return {
     id,
     content,
-    ...matterResult.data
+    readingTime: computeReadingTime(content),
+    ...matterResult.data,
   }
 }

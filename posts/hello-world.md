@@ -1,6 +1,8 @@
 ---
 title: 'Hello World: new dev blog in NextJS'
 date: '2022-12-29'
+tags: ['nextjs', 'blog']
+description: 'Welcome to my newly redesigned personal developer blog built with NextJS.'
 ---
 # Hello World!
 

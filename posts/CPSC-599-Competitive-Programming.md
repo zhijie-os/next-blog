@@ -1,6 +1,8 @@
 ---
 title: 'CPSC 599 Competitive Programming'
 date: '2024-01-08'
+tags: ['competitive-programming', 'course-notes', 'algorithms']
+description: 'Course notes and problem-solving strategies from CPSC 599 Competitive Programming at the University of Calgary.'
 ---
 
 

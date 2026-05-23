@@ -1,6 +1,8 @@
 ---
 title: 'Cuda implementation for mutiplication to illustrate CUTLASS'
 date: '2024-09-29'
+tags: ['cuda', 'cutlass', 'gpu', 'hpc']
+description: 'A deep dive into CUDA matrix multiplication and how CUTLASS optimizes GPU kernels.'
 ---
 
 ~~~c

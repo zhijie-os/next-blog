@@ -1,46 +1,39 @@
 import Link from "next/link";
 import MobileNavbar from "./mobileNavbar";
-import Image from "next/image";
-const headerNavLinks: { title: string; href: string }[] = [{ title: "HOME", href: "/" }, { title: "BLOG", href: "/posts" }, { title: "PUBLICATION", href:"/publication"}]
+import ThemeSwitch from "./ThemeSwitch";
+
+const headerNavLinks: { title: string; href: string }[] = [
+  { title: "Home", href: "/" },
+  { title: "Blog", href: "/posts" },
+];
 
 export default function Navbar() {
-    return (
-        <div className="flex justify-between">
-            <div className="md:mx-auto flex items-center p-4">
-                <Link href="/"><Image 
-                    src="/signature-white.svg" 
-                    alt="logo" 
-                    width={144} 
-                    height={144}
-                    className="signature-toggle"
-                    />
-                </Link>
-                <Link href="/"><Image 
-                    src="/signature.svg"
-                    alt="logo" 
-                    width={144} 
-                    height={144}
-                    className="dark:hidden"
-                    />
-                </Link>
-                {/* <h1 className="text-3xl text-white">Keep Coding!</h1> */}
-            </div>
+  return (
+    <div className="flex justify-between items-center max-w-2xl mx-auto w-full px-4 py-4">
+      <Link
+        href="/"
+        className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 hover:no-underline"
+      >
+        Zhijie Xia
+      </Link>
 
-            <div className="md:mx-auto flex items-center text-base leading-5">
-                <div className="hidden sm:block">
-                    {headerNavLinks.map((link) => (
-                        <Link
-                            key={link.title}
-                            href={link.href}
-                            className="font-medium sm:p-4 "
-                        >
-                            {link.title}
-                        </Link>
-                    ))}
-                </div>
-                {/* <ThemeSwitch /> */}
-                <MobileNavbar />
-            </div>
+      <div className="flex items-center gap-1 text-sm">
+        <div className="hidden sm:flex items-center">
+          {headerNavLinks.map((link) => (
+            <Link
+              key={link.title}
+              href={link.href}
+              className="px-3 py-1.5 font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors rounded-md hover:no-underline"
+            >
+              {link.title}
+            </Link>
+          ))}
+          <div className="ml-2">
+            <ThemeSwitch />
+          </div>
         </div>
-    )
+        <MobileNavbar />
+      </div>
+    </div>
+  );
 }
