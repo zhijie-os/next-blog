@@ -82,6 +82,7 @@ export default function Post({ postData }) {
             ogUrl={postUrl}
             canonical={postUrl}
             showMiniAvatar
+            wide
         >
             <script
                 type="application/ld+json"
@@ -125,6 +126,11 @@ export default function Post({ postData }) {
                     <div className="flex flex-wrap items-center gap-2 mt-3 text-sm text-neutral-500 dark:text-neutral-400">
                         <Date dateString={postData.date} />
                         <span>{postData.readingTime} min read</span>
+                        {postData.lastModified && (
+                            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                                (updated <Date dateString={postData.lastModified} />)
+                            </span>
+                        )}
                     </div>
 
                     {postData.tags && postData.tags.length > 0 && (
