@@ -144,7 +144,7 @@ export default function Home() {
               <span>/</span>
               <a href="https://scholar.google.com/citations?user=YOUR_ID" target="_blank" rel="noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline">Google Scholar</a>
               <span>/</span>
-              <a href="/Zhijie_Xia_UCalgary_Resume.pdf" className="hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline">CV</a>
+              <a href="/CV.pdf" className="hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline">CV</a>
             </div>
           </div>
         </div>
