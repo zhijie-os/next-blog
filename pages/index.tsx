@@ -131,7 +131,7 @@ export default function Home() {
               AI Infrastructure Engineer & Researcher
             </p>
             <p className="mt-3 text-base text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-lg">
-              I build AI systems and research reinforcement learning. Previously at Huawei, Lucid Vision Labs,
+              I build AI infrastructure and conduct research in reinforcement learning. Previously at Huawei, Lucid Vision Labs,
               and the Programmable Reality Lab. Incoming MSc student at University of Alberta under Dr. Rupam Mahmood.
             </p>
 
