@@ -209,6 +209,69 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Open Source Contributions */}
+          <section className="pb-10">
+            <h2 className="section-heading">Open Source Contributions</h2>
+            <div className="space-y-4">
+              <div className="cv-entry">
+                <div className="cv-title">
+                  <a
+                    href="https://github.com/volcengine/verl"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    VERL
+                  </a>
+                  <span className="text-xs text-neutral-400 dark:text-neutral-500 ml-2 font-mono">
+                    volcengine/verl
+                  </span>
+                </div>
+                <div className="cv-meta mt-0.5">
+                  Volcano Engine Reinforcement Learning for LLMs — a flexible, efficient, and production-ready RL training framework for large language models.
+                </div>
+                <div className="flex items-center gap-1 mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  <a
+                    href="https://github.com/verl-project/verl/pull/5756"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="resource-link hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    PR #5756
+                  </a>
+                </div>
+              </div>
+              <div className="cv-entry">
+                <div className="cv-title">
+                  <a
+                    href="https://github.com/vllm-project/vllm-ascend"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    vllm-ascend
+                  </a>
+                  <span className="text-xs text-neutral-400 dark:text-neutral-500 ml-2 font-mono">
+                    vllm-project/vllm-ascend
+                  </span>
+                </div>
+                <div className="cv-meta mt-0.5">
+                  Ascend NPU backend plugin for vLLM, enabling high-throughput and low-latency LLM inference on Huawei Ascend hardware.
+                </div>
+                <div className="flex items-center gap-1 mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  <a
+                    href="https://github.com/vllm-project/vllm-ascend/pull/7631"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="resource-link hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    PR #7631
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
         </div>
 
         {/* Right column: Education + Experience */}
