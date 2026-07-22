@@ -8,17 +8,19 @@ import Project from "../components/project";
 const educationData = [
   {
     time: "Sep 2026 (Incoming)",
-    title: "MSc in Computing Science (Thesis)",
+    title: "MSc by Research in Computing Science (Thesis-based)",
     org: "University of Alberta",
     location: "Edmonton, AB, Canada",
     logo: "/logos/ualberta-logo.jpg",
+    supervisor: "Supervisor: Dr. Rupam Mahmood",
   },
   {
     time: "2019 - 2024",
-    title: "BSc in Computer Science, First-class Honours (GPA 3.92/4)",
+    title: "BSc in Computer Science with Co-op, First-class Honours (GPA 3.92/4)",
     org: "University of Calgary",
     location: "Calgary, AB, Canada",
     logo: "/logos/ucalgary-logo.png",
+    supervisor: "Supervisor: Dr. Ryo Suzuki",
   },
 ];
 
@@ -299,6 +301,11 @@ export default function Home() {
                   <div className="text-xs text-neutral-400 dark:text-neutral-500">
                     {item.location}
                   </div>
+                  {item.supervisor && (
+                    <div className="text-xs text-neutral-400 dark:text-neutral-500">
+                      {item.supervisor}
+                    </div>
+                  )}
                   <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 font-mono">
                     {item.time}
                   </div>
