@@ -28,15 +28,8 @@ const educationData = [
 
 const experienceData = [
   {
-    time: "Nov 2025 - Present",
-    title: "Applied RL for LLM Researcher",
-    org: "Huawei",
-    location: "Hangzhou, Zhejiang, China",
-    logo: "/logos/huawei-logo.png",
-  },
-  {
-    time: "Sep 2024 - Nov 2025",
-    title: "AI Infrastructure Engineer",
+    time: "Sep 2024 - Apr 2026",
+    title: "AI Infrastructure Engineer & Applied RL Researcher",
     org: "Huawei",
     location: "Hangzhou, Zhejiang, China",
     logo: "/logos/huawei-logo.png",
