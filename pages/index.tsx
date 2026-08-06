@@ -61,7 +61,7 @@ const publications = [
   {
     title: "ACRL: Adaptive Control of Training-Inference Discrepancy for Stable Reinforcement Learning",
     authors: "Wenwu Fan*, Qihong Lin*, Zhijie Xia*, Zhuo Zheng, Sihao Wang, Qiang Chen, Liangsheng Zhu",
-    venue: "Under TMLR reviewing process",
+    venue: "TMLR",
     pdfUrl: "/ACRL.pdf",
   },
   {
