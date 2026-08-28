@@ -60,7 +60,7 @@ const experienceData = [
 const publications = [
   {
     title: "ACRL: Adaptive Control of Training-Inference Discrepancy for Stable Reinforcement Learning",
-    authors: "Wenwu Fan*, Qihong Lin*, Zhijie Xia*, Zhuo Zheng, Sihao Wang, Qiang Chen, Liangsheng Zhu",
+    authors: "Wenwu Fan*, Zhijie Xia*, Qihong Lin* , Zhuo Zheng*, Sihao Wang, Qiang Chen, Liangsheng Zhu",
     venue: "TMLR 2026",
     pdfUrl: "/ACRL.pdf",
   },
