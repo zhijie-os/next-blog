@@ -7,7 +7,7 @@ import Project from "../components/project";
 
 const educationData = [
   {
-    time: "Sep 2026 (Incoming)",
+    time: "Sep 2026 - Present",
     title: "MSc in Computing Science (Thesis)",
     org: "University of Alberta",
     location: "Edmonton, AB, Canada",
@@ -129,7 +129,7 @@ export default function Home() {
             </p>
             <p className="mt-3 text-base text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-lg">
               I build AI infrastructure and conduct research in reinforcement learning. Previously at Huawei, Lucid Vision Labs,
-              and the Programmable Reality Lab. Incoming MSc student at University of Alberta under Dr. Rupam Mahmood.
+              and the Programmable Reality Lab. MSc student at University of Alberta under Dr. Rupam Mahmood.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
