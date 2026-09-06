@@ -8,11 +8,25 @@
     <atom:link href="https://zhijiexia.dev/rss.xml" rel="self" type="application/rss+xml"/>
     
     <item>
-      <title>Address off-policy training in VERL</title>
+      <title>Why I pre-ordered a Framework Laptop 13 Pro</title>
+      <link>https://zhijiexia.dev/posts/framework-13-pro</link>
+      <guid isPermaLink="true">https://zhijiexia.dev/posts/framework-13-pro</guid>
+      <pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate>
+      <description>Leaving Huawei, losing access to H200s, and the long search for a laptop I would never have to replace.</description>
+    </item>
+    <item>
+      <title>Enabling MXFP8 Inference on Ascend NPUs for VERL</title>
+      <link>https://zhijiexia.dev/posts/mxfp8-ascend</link>
+      <guid isPermaLink="true">https://zhijiexia.dev/posts/mxfp8-ascend</guid>
+      <pubDate>Fri, 27 Mar 2026 00:00:00 GMT</pubDate>
+      <description>How I brought MXFP8 quantization to VERL rollout on Huawei Ascend 950 devices — two PRs, a weight reloading puzzle, and a lot of tensor shape debugging.</description>
+    </item>
+    <item>
+      <title>Training-Inference Discrepancy in LLM Reinforcement Learning</title>
       <link>https://zhijiexia.dev/posts/verl-problem</link>
       <guid isPermaLink="true">https://zhijiexia.dev/posts/verl-problem</guid>
       <pubDate>Sat, 01 Nov 2025 00:00:00 GMT</pubDate>
-      <description>Addressing off-policy training challenges in VERL for reinforcement learning with LLMs.</description>
+      <description>How quantization in inference engines secretly turns on-policy RL into off-policy training, and how adaptive control can fix it.</description>
     </item>
     <item>
       <title>Cuda implementation for mutiplication to illustrate CUTLASS</title>
@@ -64,11 +78,11 @@
       <description>Daily LeetCode problems solved in Rust and C++ throughout January 2023.</description>
     </item>
     <item>
-      <title>Hello World: new dev blog in NextJS</title>
+      <title>Hello World</title>
       <link>https://zhijiexia.dev/posts/hello-world</link>
       <guid isPermaLink="true">https://zhijiexia.dev/posts/hello-world</guid>
       <pubDate>Thu, 29 Dec 2022 00:00:00 GMT</pubDate>
-      <description>Welcome to my newly redesigned personal developer blog built with NextJS.</description>
+      <description>Welcome to my personal blog — a place for notes on reinforcement learning, LLM infrastructure, and whatever I am building.</description>
     </item>
   </channel>
 </rss>

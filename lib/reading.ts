@@ -33,9 +33,13 @@ export type ReadingGroup = {
 
 // gray-matter turns unquoted YAML dates into Date objects; normalize so
 // sorting, JSON props, and date-fns parseISO all see 'yyyy-mm-dd'.
+// Returns '' when the value can't produce a valid date key.
 function toDateKey(d: unknown): string {
-  if (d instanceof Date) return d.toISOString().slice(0, 10)
-  return String(d ?? '').slice(0, 10)
+  if (d instanceof Date) {
+    return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10)
+  }
+  const s = String(d ?? '').slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''
 }
 
 function toAuthors(a?: string | string[]): string[] {
@@ -48,15 +52,28 @@ function readFile(slug: string): ReadingNote | null {
   if (!fs.existsSync(fullPath)) return null
   const fileContents = fs.readFileSync(fullPath, 'utf8')
   const { data, content: rawContent } = matter(fileContents) // gray-matter strips frontmatter before any MDX processing
+  // Empty placeholder files (no frontmatter at all) are not notes yet; skip
+  // them so they can't break the build, but say so in the build log.
+  if (Object.keys(data).length === 0) {
+    console.warn(`[reading] skipping ${slug}.mdx: no frontmatter yet (empty placeholder?)`)
+    return null
+  }
   if (data.draft) return null
   const content = normalizeMathDelimiters(rawContent)
+  // dateRead drives ordering and every date display; a note without a usable
+  // dateRead falls back to the file's mtime so it still publishes.
+  let dateRead = toDateKey(data.dateRead)
+  if (!dateRead) {
+    dateRead = fs.statSync(fullPath).mtime.toISOString().slice(0, 10)
+    console.warn(`[reading] ${slug}.mdx: missing or invalid dateRead, using file mtime ${dateRead}`)
+  }
   const note: ReadingNote = {
     slug,
     title: String(data.title ?? slug),
     authors: toAuthors(data.authors),
     venue: data.venue,
     year: data.year,
-    dateRead: toDateKey(data.dateRead),
+    dateRead,
     topic: String(data.topic ?? 'Misc'),
     tags: Array.isArray(data.tags) ? data.tags.map(String) : undefined,
     paperUrl: data.paperUrl,
