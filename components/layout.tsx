@@ -20,6 +20,7 @@ interface LayoutProps {
   canonical?: string;
   showMiniAvatar?: boolean;
   wide?: boolean;
+  docs?: boolean;
 }
 
 export default function Layout({
@@ -32,6 +33,7 @@ export default function Layout({
   canonical,
   showMiniAvatar = false,
   wide = false,
+  docs = false,
 }: LayoutProps) {
   const title = metaTitle || siteTitle;
   const description = metaDescription || defaultDescription;
@@ -85,7 +87,7 @@ export default function Layout({
       )}
 
       <main className="flex-1 flex justify-center px-4 md:px-8">
-        <div className={`w-full ${wide ? 'max-w-4xl' : 'max-w-2xl'}`}>
+        <div className={`w-full ${docs ? 'max-w-6xl' : wide ? 'max-w-4xl' : 'max-w-2xl'}`}>
           {children}
           <Analytics />
         </div>

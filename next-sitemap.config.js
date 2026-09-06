@@ -14,6 +14,12 @@ module.exports = {
         if (path.startsWith('/posts/')) {
             return { loc: path, changefreq: 'monthly', priority: 0.7, lastmod: new Date().toISOString() }
         }
+        if (path === '/reading') {
+            return { loc: path, changefreq: 'weekly', priority: 0.8, lastmod: new Date().toISOString() }
+        }
+        if (path.startsWith('/reading/')) {
+            return { loc: path, changefreq: 'monthly', priority: 0.6, lastmod: new Date().toISOString() }
+        }
         return { loc: path, changefreq: 'weekly', priority: 0.5, lastmod: new Date().toISOString() }
     },
 }

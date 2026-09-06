@@ -5,6 +5,7 @@ import ThemeSwitch from "./ThemeSwitch";
 const headerNavLinks: { title: string; href: string }[] = [
   { title: "Home", href: "/" },
   { title: "Blog", href: "/posts" },
+  { title: "Reading", href: "/reading" },
 ];
 
 export default function MobileNavbar() {

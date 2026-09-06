@@ -1,10 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
+import { normalizeMathDelimiters } from './math'
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
-function computeReadingTime(content: string): number {
+export function computeReadingTime(content: string): number {
   const words = content.split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.round(words / 200))
 }
@@ -65,7 +66,7 @@ export async function getPostData(id: string) {
   const fileContents = fs.readFileSync(fullPath, 'utf8')
 
   const matterResult = matter(fileContents)
-  const content = matterResult.content
+  const content = normalizeMathDelimiters(matterResult.content)
 
   return {
     id,

@@ -1,0 +1,295 @@
+---
+title: Minimum-Delay Adaptation in Non-Stationary Reinforcement Learning via Online High-Confidence Change-Point Detection
+authors:
+  - Lucas N. Alegre
+  - Ana L. C. Bazzan
+  - Bruno C. da Silva
+venue: AAMAS
+year: 2021
+dateRead: 2026-09-06
+topic: Change Point Deteciton
+tags: [non-stationary-rl, change-point-detection, cusum, model-based-rl, continual-learning]
+paperUrl: https://arxiv.org/abs/2105.09452
+description: Detecting recurring and novel MDP contexts online with MCUSUM, while maintaining context-specific dynamics models and policies.
+draft: false
+---
+
+## Why I read it
+
+I am interested in detecting regime changes in non-stationary reinforcement
+learning without being given the regime identity or the change points. This
+paper is particularly relevant because it explicitly treats the environment as
+a sequence of latent MDPs, which the authors call *contexts*, and asks how an
+agent can detect context changes online and rapidly adapt to either a previously
+seen or a novel context.
+
+I was mainly interested in how MBCD performs the detection itself, rather than
+the policy optimization component.
+
+## Main idea
+
+The paper introduces **Model-Based RL Context Detection (MBCD)**. The overall
+idea is to maintain a collection of models corresponding to previously observed
+contexts and use online change-point detection to determine which context is
+currently active.
+
+The change-point detection machinery itself is not fundamentally new. MBCD
+builds on CUSUM and its multivariate extension, MCUSUM. The important step is
+applying it to learned probabilistic dynamics models in continuous-state and
+continuous-action RL.
+
+For each identified context \(k\), MBCD learns a probabilistic model
+
+\[
+p_{\theta_k}(s_{t+1}, r_t \mid s_t, a_t),
+\]
+
+representing its transition and reward dynamics.
+
+Suppose the agent currently believes that it is in context \(z_t\). For every
+known alternative context \(k\), MBCD accumulates an MCUSUM statistic
+
+\[
+W_{k,t}
+=
+\max\left(
+0,
+W_{k,t-1}
++
+\log
+\frac{
+p_{\theta_k}(s_{t+1}, r_t \mid s_t, a_t)
+}{
+p_{\theta_{z_t}}(s_{t+1}, r_t \mid s_t, a_t)
+}
+\right).
+\]
+
+Intuitively, each statistic accumulates evidence for the hypothesis:
+
+> "These transitions look more like context \(k\) than the context I currently
+> believe I am in."
+
+As long as the current model explains the observations better, the statistic
+tends to stay near zero. If observations consistently become more likely under
+another context model, its statistic begins accumulating.
+
+MBCD also maintains a statistic \(W_{\text{new},t}\) for the possibility that
+the current environment does not correspond to any previously observed
+context. Since there is no learned model for an unseen context yet, the authors
+construct a hypothesis distribution \(p_{\theta_{\text{new}}}\) using the
+observed transition and the predictive uncertainty of the currently believed
+context.
+
+A context switch happens once there exists an alternative whose statistic
+exceeds a threshold \(h\). If several do, MBCD chooses the one with the largest
+statistic. If the winning hypothesis is an existing context, its previously
+learned model and policy can be reused. If the winning hypothesis is
+\(W_{\text{new}}\), a new context is created and added to the collection.
+
+Therefore the number of contexts does not need to be specified beforehand and,
+conceptually, the collection can continue growing as new regimes are
+encountered.
+
+## Important observations
+
+### Recurring contexts are handled explicitly
+
+I like the distinction MBCD makes between **change detection** and **context
+identification**.
+
+Detecting that
+
+\[
+p_{\theta_{z_t}}
+\]
+
+no longer explains the data is not enough. After detecting a change, the agent
+also needs to determine whether this is:
+
+1. a context it has encountered before, or
+2. a genuinely new context.
+
+MBCD handles both within the same set of MCUSUM statistics. Each known context
+competes with the new-context hypothesis.
+
+This gives the method a natural mechanism for recurring environments. If a
+previous context returns, its model can become likely again and the associated
+policy can immediately be redeployed instead of being learned from scratch.
+
+### Contexts must persist long enough to be identified
+
+The method requires a warm-up period when a novel context is encountered so
+that its dynamics model can become sufficiently reliable before it is used for
+change-point detection.
+
+I think this is a reasonable assumption and potentially useful for my own
+work. A regime cannot be arbitrarily short-lived. There must be enough samples
+from a regime for the agent to identify it and learn something useful about it.
+
+This is not merely an implementation convenience. If regimes are allowed to
+change arbitrarily quickly, there are settings in which detecting and adapting
+to them is fundamentally impossible.
+
+For my purposes, I can therefore make an explicit **minimum regime duration /
+minimum dwell-time assumption**, as long as I state clearly why it is needed.
+
+### Adaptation is memory-heavy
+
+MBCD obtains strong recurring-context performance by explicitly preserving
+context-specific knowledge.
+
+For every context, it maintains:
+
+- a probabilistic dynamics model,
+- a context-specific policy,
+- and a replay dataset \(D_z\) containing experiences collected in that context.
+
+The dynamics model is itself a bootstrap ensemble of probabilistic neural
+networks. The stored experiences are used to continue fitting the model.
+
+Policy learning is then performed using a Dyna-style procedure. The learned
+context model generates simulated one-step transitions, and SAC is trained
+using both the real context-specific replay data and the generated data.
+
+This makes recurrence relatively easy: once a context returns, both its model
+and specialized policy are still available.
+
+However, memory consumption grows with the number of contexts. In particular,
+storing all experiences in \(D_z\), an ensemble model, and a separate policy
+for every discovered context is difficult to reconcile with a strict streaming
+RL setting where replay buffers may not be available.
+
+## My thoughts / critique
+
+The strongest part of this paper for me is the formulation of context detection
+rather than the underlying RL algorithm.
+
+CUSUM itself is classical, and MCUSUM is also not introduced by this paper.
+The contribution is putting likelihood-based sequential change detection
+together with learned dynamics models and context-specific RL in a way that
+works online in continuous control.
+
+The empirical results are convincing. MBCD is able to detect abrupt changes
+with very small delay and, importantly, recognize recurring contexts rather
+than repeatedly relearning them.
+
+At the same time, the solution pays for this capability with explicit memory.
+The method effectively builds a growing library:
+
+\[
+\mathcal{M}_1,\mathcal{M}_2,\ldots,\mathcal{M}_K
+\]
+
+with corresponding models, policies, and data. There is no fixed upper bound on
+\(K\), so the representation can continue growing as qualitatively different
+contexts appear.
+
+That is reasonable for the problem the paper studies, but it is substantially
+different from the resource constraints I care about in streaming learning.
+
+Another useful distinction is that MBCD assumes that a regime can eventually
+be represented by a sufficiently accurate probabilistic dynamics model. Its
+change detection then depends on likelihood ratios between these models. This
+means that context detection quality is tied directly to model quality.
+
+A possible edge case is a regime change that only weakly changes the
+distribution over transitions encountered under the current policy. In that
+case, even if the underlying MDP has changed, the likelihood ratio may provide
+little evidence until the policy visits states where the two regimes differ.
+
+## Connection to my research
+
+I do not think MBCD itself is something I should directly apply to my current
+method. Its assumptions and resource requirements are substantially different
+from the streaming setting I am interested in.
+
+There are, however, two parts that are directly useful.
+
+### 1. Minimum regime duration as an assumption
+
+I can make essentially the same assumption that a regime must persist long
+enough to be detected and learned.
+
+Without such an assumption, sufficiently rapid context switching makes
+meaningful adaptation impossible anyway. This gives a principled justification
+for requiring some minimum amount of experience within each regime.
+
+### 2. Experimental design
+
+Their non-stationary environments provide useful examples for designing my own
+experiments.
+
+**Continuous Particle Maze**
+
+Non-stationarity is introduced through:
+
+- changing wall locations,
+- changing goal locations.
+
+This separates changes in transition dynamics from changes in the task/reward.
+
+**Half-Cheetah**
+
+They introduce several qualitatively different forms of non-stationarity:
+
+- **random wind** — an external force modifies the transition dynamics;
+- **joint malfunction** — a joint is disabled or its torque behavior changes;
+- **target velocity** — the objective changes, modifying the reward function.
+
+I especially like this design because it does not reduce non-stationarity to a
+single parameter perturbation. Different regimes arise from qualitatively
+different causes.
+
+For my experiments, this suggests testing regime adaptation across multiple
+types of shifts rather than only something like changing gravity magnitude.
+
+### A useful contrast with my problem
+
+MBCD also gives me a useful reference point for thinking about **regime
+memory**.
+
+Their answer to recurring regimes is essentially:
+
+> preserve a complete context-specific model, policy, and experience memory,
+> identify which context has returned, and restore the corresponding solution.
+
+The question for a streaming learner is harder:
+
+> How much information about a previous regime actually needs to be retained
+> in order to recognize and rapidly readapt to it, if storing full replay
+> buffers and independent policies is not allowed?
+
+This difference may be more useful to my work than directly borrowing the MBCD
+algorithm itself.
+
+## Questions / possible experiments
+
+- How much context-specific information is actually necessary for recognizing
+  a recurring regime? Do we really need a full dynamics model and policy for
+  every regime?
+
+- Can a much smaller **regime memory** replace the per-context replay buffers
+  and policies used by MBCD?
+
+- What happens when two regimes are very similar and both corresponding
+  \(W_{k,t}\) statistics increase after a change? How stable is identification
+  when the likelihood separation between contexts is small?
+
+- How sensitive is detection delay to the quality of the learned dynamics
+  model?
+
+- Can likelihood-based regime detection still work in a strict streaming
+  setting where previous transitions cannot be retained?
+
+- For experiments, test whether a method handles qualitatively different
+  changes separately:
+  - external forces,
+  - actuator/joint changes,
+  - environment geometry,
+  - reward/goal changes.
+
+- In addition to testing novel regimes, explicitly test
+  \(A \rightarrow B \rightarrow A\) and longer recurring sequences. A method
+  that detects distribution shift but cannot exploit recurrence is solving a
+  different problem from one that actually remembers regimes.

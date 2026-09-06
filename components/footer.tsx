@@ -8,6 +8,8 @@ export default function Footer() {
                 <span>/</span>
                 <Link href="/posts">Blog</Link>
                 <span>/</span>
+                <Link href="/reading">Reading</Link>
+                <span>/</span>
                 <Link href="/gallery">Gallery</Link>
                 <span>/</span>
                 <a href="/rss.xml">RSS</a>
