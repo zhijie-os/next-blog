@@ -1,9 +1,12 @@
 import { MDXRemote } from 'next-mdx-remote'
 import { serialize } from 'next-mdx-remote/serialize'
 import type { MDXRemoteSerializeResult } from 'next-mdx-remote'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+// next-mdx-remote v6 compiles with @mdx-js/mdx 3 (unified 11), so the reading
+// pipeline uses the unified-11 majors of these plugins via npm aliases. The
+// blog (react-markdown 8, unified 10) keeps the plain names.
+import remarkGfm from 'remark-gfm-mdx3'
+import remarkMath from 'remark-math-mdx3'
+import rehypeKatex from 'rehype-katex-mdx3'
 import Layout, { siteUrl } from '../../components/layout'
 import ReadingSidebar from '../../components/reading/Sidebar'
 import OnThisPage from '../../components/reading/OnThisPage'
