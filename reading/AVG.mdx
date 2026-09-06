@@ -1,0 +1,627 @@
+---
+title: Deep Policy Gradient Methods Without Batch Updates, Target Networks, or Replay Buffers
+authors:
+  - Gautham Vasan
+  - Mohamed Elsayed
+  - Seyed Alireza Azimi
+  - Jiamin He
+  - Fahim Shahriar
+  - Colin Bellinger
+  - Martha White
+  - A. Rupam Mahmood
+venue: NeurIPS
+year: 2024
+dateRead: 2026-09-06
+topic: Streaming Reinforcement Learning
+tags: [streaming-rl, incremental-learning, policy-gradient, actor-critic, avg, reinforcement-learning]
+paperUrl: https://arxiv.org/abs/2411.15370
+codeUrl: https://github.com/gauthamvasan/avg
+description: Action Value Gradient enables deep policy-gradient reinforcement learning with fully incremental updates, without replay buffers, target networks, or batch updates.
+draft: false
+---
+
+## Main idea
+
+I consider AVG one of the strongest existing methods for deep streaming /
+incremental reinforcement learning, alongside methods such as Stream-X.
+
+However, the scope of this paper is specifically **policy-gradient methods**.
+The problem it addresses is whether deep policy-gradient RL can learn under a
+strict incremental-learning constraint:
+
+- no replay buffer,
+- no batch updates,
+- no target networks,
+- learning only from the most recent transition.
+
+These are essentially the resource constraints I am interested in building on
+for streaming RL.
+
+The paper shows that standard deep RL methods such as SAC, PPO, and TD3 degrade
+or fail when their replay buffers and batch sizes are reduced toward the
+incremental setting. AVG is designed specifically to remain stable under this
+constraint.
+
+At a high level, AVG combines:
+
+1. a **reparameterization-gradient (RG)** policy-gradient estimator,
+2. online **observation normalization**,
+3. **penultimate-layer normalization**, and
+4. **TD-error scaling**.
+
+The interesting question for me is which of these ingredients make incremental
+learning possible, and whether they remain appropriate once the underlying MDP
+itself becomes non-stationary.
+
+### Likelihood gradient vs. reparameterization gradient
+
+A major difference between AVG and traditional incremental actor-critic is how
+the **actor** receives its learning signal.
+
+#### Likelihood gradient (LG)
+
+With the usual likelihood-gradient / score-function estimator, we sample
+
+\[
+A \sim \pi_\theta(\cdot \mid S)
+\]
+
+and evaluate how good that sampled action was.
+
+Ignoring entropy for the moment, the policy-gradient estimator has the form
+
+\[
+\nabla_\theta J
+\approx
+Q(S,A)
+\nabla_\theta \log \pi_\theta(A\mid S),
+\]
+
+or, in a traditional actor-critic implementation, an advantage or TD-error
+estimate can replace \(Q(S,A)\):
+
+\[
+\nabla_\theta J
+\approx
+\delta_t
+\nabla_\theta \log \pi_\theta(A_t\mid S_t).
+\]
+
+The interpretation is:
+
+> I sampled action \(A\). If the critic says that this action was better than
+> expected, increase the probability of sampling actions like it again. If it
+> was worse than expected, decrease its probability.
+
+So the computation is roughly
+
+\[
+A \sim \pi_\theta
+\rightarrow
+Q(S,A)
+\rightarrow
+Q(S,A)\nabla_\theta\log\pi_\theta(A\mid S).
+\]
+
+Importantly, LG does **not** use
+
+\[
+\nabla_A Q(S,A).
+\]
+
+The critic only supplies a scalar evaluation of the sampled action. The actor
+does not ask the critic which nearby action would be better.
+
+For example, suppose the policy samples \(a=0.4\), and the critic evaluates this
+action positively. LG essentially says:
+
+> "0.4 was good, so make 0.4-like actions more probable."
+
+It does not directly know whether changing the action from \(0.4\) toward
+\(0.5\) or toward \(0.3\) would increase return.
+
+---
+
+#### Reparameterization gradient (RG)
+
+RG exploits the fact that, for continuous actions, the stochastic policy can
+often be rewritten as a differentiable function of parameter-independent
+noise:
+
+\[
+\epsilon \sim \mathcal N(0,I),
+\]
+
+\[
+A_\theta = f_\theta(S,\epsilon).
+\]
+
+For AVG's Gaussian policy, conceptually this is
+
+\[
+A_\theta
+=
+\tanh(
+\mu_\theta(S)
++
+\sigma_\theta(S)\epsilon
+).
+\]
+
+Now the sampled action is itself a differentiable function of the actor
+parameters.
+
+The computation becomes
+
+\[
+\epsilon
+\rightarrow
+A_\theta
+\rightarrow
+Q_\phi(S,A_\theta).
+\]
+
+The critic can therefore provide
+
+\[
+\nabla_A Q_\phi(S,A)
+\]
+
+which tells us the local direction in **action space** that would increase the
+critic's predicted value.
+
+Because
+
+\[
+A_\theta=f_\theta(S,\epsilon),
+\]
+
+the chain rule gives
+
+\[
+\nabla_\theta Q_\phi(S,A_\theta)
+=
+\underbrace{
+\nabla_A Q_\phi(S,A_\theta)
+}_{\text{which direction should the action move?}}
+\underbrace{
+\nabla_\theta A_\theta
+}_{\text{how should the actor change to move the action?}}.
+\]
+
+This is the key difference.
+
+LG asks:
+
+> "Was the action I sampled good?"
+
+RG asks:
+
+> "At the action I sampled, in which direction does the critic predict that
+> the action should move to become better?"
+
+The gradient can then flow directly
+
+\[
+Q
+\rightarrow
+A
+\rightarrow
+\theta.
+\]
+
+For a one-dimensional action, if
+
+\[
+\frac{\partial Q(S,A)}{\partial A} > 0,
+\]
+
+the critic locally predicts that increasing the action should increase value.
+
+If
+
+\[
+\frac{\partial Q(S,A)}{\partial A} < 0,
+\]
+
+it predicts that decreasing the action should increase value.
+
+For multidimensional actions, this becomes the vector
+
+\[
+\nabla_A Q(S,A),
+\]
+
+which gives a local ascent direction in the continuous action space.
+
+This provides considerably richer information than simply assigning a scalar
+"good" or "bad" score to one sampled action.
+
+---
+
+### AVG actor update
+
+AVG uses this reparameterization gradient together with entropy regularization.
+
+The actor approximately maximizes
+
+\[
+J_\pi(\theta)
+=
+Q_\phi(S,A_\theta)
+-
+\eta
+\log \pi_\theta(A_\theta\mid S).
+\]
+
+Therefore the actor update follows
+
+\[
+\nabla_\theta
+\left[
+Q_\phi(S,A_\theta)
+-
+\eta\log\pi_\theta(A_\theta\mid S)
+\right].
+\]
+
+The first term gives the RG signal:
+
+\[
+\nabla_AQ_\phi
+\frac{\partial A_\theta}{\partial\theta},
+\]
+
+while the second term encourages the stochastic policy to maintain entropy.
+
+During this actor update, the critic parameters \(\phi\) are treated as fixed.
+The gradient flows **through the critic with respect to its action input**, but
+the actor update does not update the critic itself.
+
+So:
+
+\[
+\theta
+\rightarrow
+A_\theta
+\rightarrow
+Q_\phi(S,A_\theta)
+\]
+
+is differentiated with respect to \(\theta\), while \(\phi\) remains unchanged.
+
+---
+
+### The critic is still trained with TD learning
+
+RG only changes the **actor update**.
+
+The critic still learns through ordinary bootstrapped TD learning.
+
+Schematically, AVG computes a one-step soft TD target
+
+\[
+y_t
+=
+r_t
++
+\gamma
+\left[
+Q_\phi(S_{t+1},A_{t+1})
+-
+\eta\log\pi_\theta(A_{t+1}\mid S_{t+1})
+\right],
+\]
+
+and the TD error is
+
+\[
+\delta_t
+=
+y_t-Q_\phi(S_t,A_t).
+\]
+
+AVG then scales this TD error before using it to update the critic.
+
+The important difference from algorithms such as SAC is that AVG does **not**
+use
+
+\[
+Q_{\bar\phi}
+\]
+
+as a separate target critic.
+
+It uses the same online critic \(Q_\phi\) to bootstrap:
+
+\[
+Q_\phi(S_t,A_t)
+\leftarrow
+r_t
++
+\gamma Q_\phi(S_{t+1},A_{t+1}).
+\]
+
+The target side is treated as fixed for the individual semi-gradient update,
+but after the update the same critic parameters have changed. There is no
+slow-moving copy of the critic.
+
+Therefore AVG has two conceptually separate design choices:
+
+1. **Actor:** use RG instead of LG.
+2. **Critic:** use incremental TD learning without a target network.
+
+RG does not itself remove the need for a target network. Target networks are
+primarily a mechanism for stabilizing the bootstrapped critic, while RG is a
+way of obtaining the actor gradient.
+
+AVG demonstrates that, with its normalization and scaling mechanisms, the
+critic can remain sufficiently stable without a target network while the actor
+can be updated from one transition at a time using RG.
+
+## Stabilizing incremental learning
+
+The second major part of AVG is controlling the large and noisy gradients that
+appear when deep networks are updated from individual transitions.
+
+### Observation normalization
+
+AVG maintains the mean and variance of observations online using Welford's
+algorithm.
+
+An important detail is that this is a **sample running mean and variance**.
+All previous observations contribute equally to the statistics.
+
+The method does not use an exponentially weighted statistic that deliberately
+places greater weight on recent observations.
+
+This choice makes sense for the setting considered in the paper. Even with a
+fixed MDP, the input distribution observed by an RL agent is non-IID because
+the policy itself changes during learning, which in turn changes the state
+distribution visited by the agent.
+
+The authors describe this as a transient distribution and report that weighted
+methods emphasizing recent observations did not perform as well in their
+experiments.
+
+This distinction is particularly important for my work.
+
+There are at least two different sources of non-stationarity:
+
+\[
+\text{changing policy}
+\rightarrow
+\text{changing state visitation distribution}
+\]
+
+versus
+
+\[
+\text{changing MDP}
+\rightarrow
+\text{changing environment distribution}.
+\]
+
+AVG explicitly addresses the first type. It does not explicitly study the
+second.
+
+If the MDP itself changes abruptly, giving every observation from the entire
+history equal weight could become undesirable. Statistics accumulated under an
+old regime may continue dominating normalization long after the environment
+has changed.
+
+This suggests that the normalization mechanism itself may need to become
+regime-adaptive.
+
+### Penultimate normalization
+
+AVG also normalizes the activations of the penultimate layer of the networks to
+have unit norm.
+
+This is intended to reduce instability and maintain useful network
+representations during continual incremental updates.
+
+This component should not be overlooked when describing AVG: the paper's
+ablation suggests that observation normalization, penultimate normalization,
+and TD-error scaling work best together.
+
+### TD-error scaling
+
+AVG scales the TD error before updating the critic:
+
+\[
+\bar{\delta}_t
+=
+\frac{\delta_t}{\sigma_\delta}.
+\]
+
+The purpose is to prevent large changes in the scale of bootstrapped targets
+from creating correspondingly large critic updates.
+
+This is particularly important in incremental learning because a single extreme
+TD error directly produces an optimization step. There is no minibatch to
+average it with other samples.
+
+Like observation normalization, the statistics used for TD-error scaling are
+maintained online across experience.
+
+## What non-IID means in this paper
+
+An important distinction for my research is that the experiments use a
+**single underlying MDP during each training run**.
+
+The stream is still non-IID because the agent is continually changing:
+
+\[
+\pi_1
+\rightarrow
+\pi_2
+\rightarrow
+\pi_3
+\rightarrow \cdots
+\]
+
+and therefore
+
+\[
+d^{\pi_1}(s)
+\neq
+d^{\pi_2}(s)
+\neq
+d^{\pi_3}(s).
+\]
+
+The distribution of experienced states changes even though the environment
+dynamics and reward function remain fixed.
+
+My setting introduces another source of non-IID data:
+
+\[
+M_1
+\rightarrow
+M_2
+\rightarrow
+M_3,
+\]
+
+where the transition dynamics, reward function, or both can change.
+
+Therefore, AVG demonstrates that deep policy-gradient learning can operate
+successfully on a single non-IID stream generated by a changing policy, but it
+does **not** establish that its normalization and scaling mechanisms are
+appropriate under latent MDP / regime changes.
+
+I think this is an important boundary of the paper rather than a weakness:
+non-stationary MDP adaptation is simply a different problem from the one AVG
+sets out to solve.
+
+## My thoughts / critique
+
+The most valuable part of AVG for my work is the learning constraint rather
+than treating AVG itself as a complete solution to non-stationary RL.
+
+I want to preserve the same basic streaming constraint:
+
+> learn from each transition once, without a replay buffer, batch updates, or
+> target networks.
+
+AVG provides a strong base algorithm under this constraint.
+
+The question is then what happens when the environment itself changes.
+
+The normalization mechanisms are particularly interesting. AVG deliberately
+uses statistics accumulated over the entire data stream. That is sensible when
+the distribution shift is caused mainly by gradual policy evolution.
+
+Under abrupt MDP changes, however, historical statistics may become stale.
+
+For example, after a regime transition
+
+\[
+M_A \rightarrow M_B,
+\]
+
+the running observation statistics are approximately a mixture of observations
+from both regimes:
+
+\[
+\mu_t
+\approx
+\frac{
+N_A \mu_A + N_B \mu_B
+}{
+N_A + N_B
+}.
+\]
+
+If \(N_A \gg N_B\), the old regime can dominate for a long time after the
+change.
+
+The same general issue could appear in optimizer states, TD-error scaling
+statistics, value estimates, and network representations.
+
+This gives me a more precise way of thinking about regime adaptation:
+AVG solves stability under a continuously changing **learning process**, while
+I am interested in adding adaptation to changes in the **environment-generating
+process**.
+
+## Connection to my research
+
+AVG is probably the most natural base learner for my experiments because its
+resource assumptions already match the streaming-learning setting I care
+about.
+
+Rather than modifying SAC and then imposing artificial memory constraints, I
+can start from an algorithm explicitly designed around:
+
+- one transition per update,
+- no replay,
+- no minibatches,
+- no target network.
+
+The research question then becomes:
+
+> Which pieces of persistent learning state in AVG become harmful when the MDP
+> changes, and how should they adapt?
+
+Candidates include:
+
+- observation running mean and variance,
+- TD-error scaling statistics,
+- Adam optimizer state,
+- critic parameters,
+- actor parameters,
+- representation statistics.
+
+This also suggests that I should distinguish between **learning
+non-stationarity** and **environment non-stationarity** throughout my work.
+
+AVG already handles substantial non-stationarity induced by continuously
+changing policies and representations.
+
+My problem begins when that assumption is extended to
+
+\[
+P_t(s',r|s,a)
+\]
+
+itself changing over time.
+
+## Questions / possible experiments
+
+- How much of AVG's advantage over IAC comes from the RG estimator itself,
+  versus normalization and TD-error scaling?
+
+- Does RG remain more stable than LG immediately after an abrupt regime
+  change?
+
+- What happens to AVG's running observation statistics after a large MDP
+  shift?
+
+- How long does a sample running mean take to adapt after a regime change as a
+  function of the amount of pre-change experience?
+
+- Would an exponentially weighted running mean adapt faster after regime
+  changes, despite performing worse in the stationary-MDP experiments reported
+  in AVG?
+
+- Instead of permanently replacing the sample mean with an exponentially
+  weighted mean, could the weighting rule itself change after a detected
+  regime transition?
+
+- Should observation-normalization statistics be stored separately as part of
+  a regime memory?
+
+- Does resetting normalization statistics after a known change improve
+  adaptation?
+
+- How do observation normalization, TD-error scaling, optimizer state, actor
+  state, and critic state individually contribute to slow adaptation after an
+  MDP shift?
+
+- Can AVG be extended to handle
+
+\[
+M_A \rightarrow M_B \rightarrow M_A, \text{  while retaining the same strict streaming constraints?}
+\]
+
