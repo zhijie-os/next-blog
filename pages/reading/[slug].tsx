@@ -55,6 +55,7 @@ export default function ReadingNotePage({ note, headings, mdxSource, groups, pre
             ogType="article"
             ogUrl={`${siteUrl}/reading/${note.slug}`}
             canonical={`${siteUrl}/reading/${note.slug}`}
+            showMiniAvatar
             docs
         >
             <div className="flex flex-col lg:flex-row gap-6 py-8">
