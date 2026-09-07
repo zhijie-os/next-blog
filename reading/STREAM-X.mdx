@@ -15,3 +15,949 @@ description: Stream-X introduces Stream TD, Stream Q, and Stream AC, enabling de
 draft: false
 ---
 
+## Main idea
+
+Stream-X is a family of streaming deep reinforcement learning algorithms rather
+than one specific RL algorithm. The main algorithms are:
+
+- Stream TD for value prediction,
+- Stream Q for action-value based control,
+- Stream AC for policy-gradient based control.
+
+The paper also presents a streaming SARSA variant.
+
+I am mostly interested in **Stream AC**, because I want to focus on streaming
+policy-gradient methods and compare it with AVG.
+
+The underlying policy-gradient algorithm in Stream AC is the classic
+one-step actor-critic method. In other words, unlike AVG, which uses a
+reparameterization-gradient estimator, Stream AC uses the traditional
+likelihood-gradient estimator.
+
+For ordinary one-step actor-critic,
+
+\[
+\delta_t
+=
+R_{t+1}
++
+\gamma \hat v(S_{t+1},w)
+-
+\hat v(S_t,w),
+\]
+
+and the actor is updated approximately using
+
+\[
+\theta_{t+1}
+=
+\theta_t
++
+\alpha
+\delta_t
+\nabla_\theta
+\log\pi_\theta(A_t|S_t).
+\]
+
+So conceptually:
+
+> AVG changes the policy-gradient estimator itself by using RG, while Stream-X
+> keeps the classical LG actor-critic formulation and instead makes it viable
+> for deep streaming learning through eligibility traces, normalization,
+> initialization, data scaling, and a new step-size control mechanism.
+
+The streaming constraints are very similar to AVG and to the setting I am
+interested in:
+
+- no replay buffer,
+- no batch updates,
+- no target networks,
+- learn immediately from each incoming transition.
+
+The central problem identified by the paper is what the authors call the
+**stream barrier**: deep RL algorithms that work with replay and minibatches
+often become unstable or fail completely when reduced to one-sample streaming
+updates.
+
+They attribute this instability mainly to:
+
+1. occasional large updates,
+2. activation non-stationarity,
+3. improper scaling of data.
+
+Stream-X combines several techniques to address these issues rather than
+relying on one single modification.
+
+---
+
+## Eligibility traces as streaming memory
+
+All Stream-X algorithms use eligibility traces.
+
+For the critic,
+
+\[
+z_t^w
+=
+\gamma\lambda z_{t-1}^w
++
+\nabla_w \hat v(S_t,w).
+\]
+
+The critic then updates approximately as
+
+\[
+w_{t+1}
+=
+w_t
++
+\alpha\delta_tz_t^w.
+\]
+
+For the policy there is a separate eligibility trace based on
+
+\[
+\nabla_\theta\log\pi_\theta(A_t|S_t).
+\]
+
+I think eligibility traces are particularly interesting under streaming
+constraints because they provide a very compact form of temporal memory.
+
+The agent cannot keep
+
+\[
+(S_{t-k},A_{t-k},R_{t-k},S_{t-k+1})
+\]
+
+in a replay buffer and revisit it later.
+
+Instead, the eligibility trace carries forward a decayed record of which
+parameters were responsible for recent predictions or actions:
+
+\[
+z_t
+=
+\nabla f_t
++
+\gamma\lambda\nabla f_{t-1}
++
+(\gamma\lambda)^2\nabla f_{t-2}
++\cdots.
+\]
+
+Therefore, when the current TD error arrives, it can assign credit not only to
+the current gradient but also to recently active parameters.
+
+This gives a form of multi-step credit assignment while storing only one
+parameter-sized trace vector.
+
+An important distinction is that the eligibility trace is **not a replay
+buffer** and is also not exactly momentum.
+
+It stores decayed gradients of the value function or policy rather than past
+transitions, and it is used for temporal credit assignment.
+
+This is attractive for streaming RL because it introduces some temporal memory
+without violating the no-replay constraint.
+
+One potential downside is that eligibility traces themselves can become large.
+Therefore, traces improve credit assignment but also make controlling update
+magnitude even more important.
+
+---
+
+## Sparse initialization
+
+Stream-X uses a sparse initialization scheme called SparseInit.
+
+Most weights are initialized to zero, while the remaining connections are
+initialized using LeCun initialization.
+
+The intuition is that sparse representations reduce interference between
+different inputs.
+
+Instead of every transition immediately modifying a dense set of interacting
+features, fewer connections are initially active. This may reduce forgetting
+and improve sample efficiency when every sample can only be used once.
+
+I see this mainly as a sample-efficiency / interference reduction technique
+rather than the central stability contribution.
+
+The ablation results also suggest that removing SparseInit hurts learning speed,
+but does not destroy the algorithm as severely as removing some of the other
+components.
+
+---
+
+## Overshooting-bounded Gradient Descent
+
+The most interesting component of Stream-X for me is the optimizer.
+
+A fixed step size that works for most streaming updates may occasionally
+produce one extremely large update.
+
+This is much more dangerous in streaming learning because there is no
+minibatch averaging:
+
+\[
+\text{one unusual transition}
+\rightarrow
+\text{one unusual gradient}
+\rightarrow
+\text{immediate parameter update}.
+\]
+
+The paper therefore focuses on controlling the **effective step size** rather
+than only specifying a nominal learning rate.
+
+Suppose the error on the current sample before an update is
+
+\[
+\delta(S),
+\]
+
+and the error that would result after applying the candidate update is
+
+\[
+\delta_+(S).
+\]
+
+The effective step size is defined as
+
+\[
+\xi
+=
+\frac{
+\delta(S)-\delta_+(S)
+}{
+\delta(S)
+}.
+\]
+
+This can be interpreted as the fraction of the current error corrected by the
+update.
+
+For example, if
+
+\[
+\delta=10
+\]
+
+and after the update
+
+\[
+\delta_+=8,
+\]
+
+then
+
+\[
+\xi
+=
+\frac{10-8}{10}
+=
+0.2.
+\]
+
+The update corrected 20% of the error.
+
+If
+
+\[
+\delta_+=0,
+\]
+
+then
+
+\[
+\xi=1.
+\]
+
+The update exactly reaches the target.
+
+If
+
+\[
+\delta_+<0
+\]
+
+while
+
+\[
+\delta>0,
+\]
+
+the error has changed sign and the update has overshot the target:
+
+\[
+\xi>1.
+\]
+
+Therefore,
+
+\[
+\xi=0
+\]
+
+means essentially no correction,
+
+\[
+0<\xi<1
+\]
+
+means partial correction, and
+
+\[
+\xi>1
+\]
+
+means overshooting.
+
+The goal is actually stricter than merely avoiding
+
+\[
+\xi>1.
+\]
+
+The algorithm chooses some maximum acceptable effective step size
+
+\[
+\xi_{\max}\leq1
+\]
+
+and tries to guarantee that each individual update remains below that limit.
+
+---
+
+## Why exact backtracking is expensive
+
+The conceptually simplest solution would be to try a candidate learning rate
+\(\alpha\).
+
+First construct hypothetical parameters
+
+\[
+w'
+=
+w+\alpha\delta z.
+\]
+
+Then evaluate the same transition using \(w'\), compute
+
+\[
+\delta_{w'},
+\]
+
+and therefore calculate
+
+\[
+\xi
+=
+\frac{\delta_w-\delta_{w'}}{\delta_w}.
+\]
+
+If
+
+\[
+\xi>\xi_{\max},
+\]
+
+reduce
+
+\[
+\alpha\leftarrow\beta\alpha
+\]
+
+and try again.
+
+Conceptually:
+
+\[
+\alpha
+\rightarrow
+\text{hypothetical update}
+\rightarrow
+\delta_+
+\rightarrow
+\xi.
+\]
+
+If the update is too large:
+
+\[
+\alpha
+\leftarrow
+\beta\alpha
+\]
+
+and repeat.
+
+This would work, but it requires repeatedly applying hypothetical updates and
+re-evaluating the network.
+
+For a neural network, each attempt requires additional computation.
+
+That defeats part of the point of having a cheap streaming learner.
+
+---
+
+## First-order approximation of the effective step size
+
+This is the part I initially found confusing.
+
+Instead of **actually applying the update and evaluating the network again**,
+the authors estimate how much the network output would change using a
+first-order Taylor approximation.
+
+For a neural network output
+
+\[
+f(x;w),
+\]
+
+after a small parameter change
+
+\[
+\Delta w,
+\]
+
+we can approximate
+
+\[
+f(x;w+\Delta w)
+\approx
+f(x;w)
++
+\nabla_w f(x;w)^\top\Delta w.
+\]
+
+This is just local linearization.
+
+Instead of asking:
+
+> "What would the neural network actually output if I changed all these
+> parameters?"
+
+we approximate:
+
+> "Given the current gradient, what should the output approximately become
+> after this small parameter change?"
+
+For TD learning,
+
+\[
+\Delta w
+=
+\alpha\delta z.
+\]
+
+Therefore, the effect of the proposed update can be approximated directly from
+
+- the learning rate \(\alpha\),
+- the eligibility trace \(z\),
+- and the local gradients.
+
+This avoids actually performing a counterfactual update and another set of
+forward passes for every candidate \(\alpha\).
+
+The approximation assumes the network is approximately linear in a small
+neighborhood around its current parameters.
+
+Interestingly, this assumption is partly self-consistent with the objective:
+ObGD is explicitly trying to prevent updates from becoming large enough that
+the local-linear approximation becomes unreasonable.
+
+---
+
+## From approximation to a conservative bound
+
+Even the Taylor approximation of the exact TD effective step size would require
+information about gradients at both the current and next states.
+
+The authors therefore simplify further.
+
+Rather than trying to calculate the exact value of
+
+\[
+\xi,
+\]
+
+they derive a conservative upper bound related to
+
+\[
+\alpha\|z\|_1.
+\]
+
+They then introduce a safety/scaling factor \(\kappa\) and account for the
+magnitude of the current error.
+
+The resulting ObGD algorithm computes approximately
+
+\[
+M
+=
+\alpha
+\kappa
+\max(|\delta|,1)
+\|z\|_1.
+\]
+
+If this quantity is small enough, the original step size is used.
+
+If it is too large, the step size is reduced directly:
+
+\[
+\alpha'
+=
+\min
+\left(
+\frac{\alpha}{M},
+\alpha
+\right).
+\]
+
+Then the actual update is
+
+\[
+w
+\leftarrow
+w
++
+\alpha'\delta z.
+\]
+
+So the actual ObGD algorithm is **not repeatedly performing the backtracking
+search**.
+
+The backtracking algorithm is the conceptual starting point:
+
+\[
+\text{try }\alpha
+\rightarrow
+\text{measure }\xi
+\rightarrow
+\text{shrink }\alpha
+\rightarrow
+\text{try again}.
+\]
+
+ObGD replaces that expensive procedure with
+
+\[
+\text{estimate a conservative update-size bound}
+\rightarrow
+\text{directly shrink }\alpha\text{ if necessary}.
+\]
+
+This is how I understand the main idea:
+
+> The nominal learning rate can remain large, but before every streaming
+> update, ObGD asks whether that particular update appears dangerously large.
+> If so, it automatically scales the update down.
+
+This addresses exactly the "occasional large update" problem identified as one
+part of the stream barrier.
+
+One important wording point is that I would not conclude that **Adam is
+generally unstable**.
+
+The more precise conclusion from this paper is that even well-tuned Adam is not
+sufficient for their strict streaming setting, whereas ObGD gives much better
+stability.
+
+---
+
+## Layer normalization and activation non-stationarity
+
+Stream-X applies LayerNorm to the pre-activation of every layer:
+
+\[
+a_l
+=
+W_lh_l,
+\]
+
+then
+
+\[
+\hat a_l
+=
+\frac{
+a_l-\mu(a_l)
+}{
+\sqrt{\operatorname{Var}(a_l)+\epsilon}
+},
+\]
+
+before applying the nonlinear activation.
+
+LayerNorm itself is obviously not a new technique.
+
+What matters here is not the invention of LayerNorm, but the claim that
+controlling the activation distribution is an essential ingredient for
+streaming deep RL.
+
+Streaming updates continually change the weights:
+
+\[
+w_t
+\rightarrow
+w_{t+1}
+\rightarrow
+w_{t+2}
+\rightarrow\cdots,
+\]
+
+which means the distribution of activations inside the network can continually
+drift even if the environment itself does not change.
+
+Without batching, each individual update may produce relatively abrupt changes
+to internal representations.
+
+LayerNorm reduces this source of scale drift by forcing each layer's
+pre-activations into a controlled distribution before passing them through the
+activation function.
+
+The implementation here is also slightly simpler than standard learnable
+LayerNorm: the normalization does not use learned scaling and bias parameters.
+
+So I would not count LayerNorm itself as a novel contribution, but I also would
+not dismiss it as unimportant. The contribution is showing that it is one of
+the pieces required for the complete streaming learning recipe.
+
+The ablation is especially relevant: removing LayerNorm substantially degrades
+Stream AC.
+
+---
+
+## Scaling observations and rewards
+
+Stream-X also normalizes observations online using running sample mean and
+variance.
+
+Conceptually,
+
+\[
+\hat S_t
+=
+\frac{
+S_t-\mu_t
+}{
+\sqrt{\sigma_t^2+\epsilon}
+}.
+\]
+
+Like AVG, these statistics summarize the entire experience history rather than
+explicitly emphasizing recent observations.
+
+This immediately raises the same concern for my regime-changing setting.
+
+Suppose the environment switches from
+
+\[
+M_A
+\rightarrow
+M_B.
+\]
+
+The running statistics immediately after the switch still contain mostly data
+from \(M_A\).
+
+If
+
+\[
+N_A\gg N_B,
+\]
+
+then
+
+\[
+\mu
+\approx
+\frac{
+N_A\mu_A+N_B\mu_B
+}{
+N_A+N_B
+}
+\]
+
+can remain strongly influenced by the old regime.
+
+Therefore, a normalization mechanism designed for a single continuing stream
+may adapt slowly after a genuine environment change.
+
+One thing I initially missed is that Stream-X also performs **reward scaling**.
+
+Instead of simply normalizing the raw reward distribution, it maintains a
+discounted reward accumulator and uses its running scale to normalize incoming
+rewards.
+
+This serves the same broad purpose as AVG's TD-error scaling—keeping learning
+signals numerically well behaved—but the mechanisms are not identical.
+
+For my work, both observation statistics and reward-scaling statistics should
+be considered persistent learning state that may become stale after a regime
+change.
+
+---
+
+## What non-stationarity means in Stream-X
+
+This distinction is important.
+
+The paper frequently discusses non-stationarity, but its primary control
+benchmarks do not explicitly switch between different latent MDPs during a run.
+
+Even within one fixed MDP, streaming RL is already non-IID.
+
+The policy changes:
+
+\[
+\pi_1
+\rightarrow
+\pi_2
+\rightarrow
+\pi_3
+\rightarrow\cdots,
+\]
+
+which changes the visited state distribution:
+
+\[
+d^{\pi_1}(s)
+\neq
+d^{\pi_2}(s)
+\neq
+d^{\pi_3}(s).
+\]
+
+The neural network parameters also continually change, which changes the
+internal activation distribution.
+
+Stream-X is designed to remain stable under this type of continually evolving
+learning process.
+
+My setting introduces another source of non-stationarity:
+
+\[
+M_1
+\rightarrow
+M_2
+\rightarrow
+M_3.
+\]
+
+Now the transition dynamics, reward function, or both may themselves change.
+
+The paper does not directly establish that the same running statistics,
+eligibility traces, optimizer state, actor parameters, or critic parameters
+remain appropriate after this type of regime transition.
+
+Therefore I see Stream-X as a strong **base streaming learner**, not as a
+solution to regime adaptation.
+
+---
+
+## Comparison with AVG
+
+Stream-X and AVG share the same fundamental streaming constraint:
+
+| Component | Stream AC | AVG |
+|---|---|---|
+| Replay buffer | No | No |
+| Batch updates | No | No |
+| Target network | No | No |
+| Actor-critic | Yes | Yes |
+| Policy-gradient estimator | LG | RG |
+| Eligibility traces | Yes | No |
+| Main update stabilization | ObGD | TD-error scaling / normalization |
+| Layer stabilization | LayerNorm | Penultimate normalization |
+| Observation normalization | Yes | Yes |
+
+The difference in policy-gradient estimator is particularly interesting to me.
+
+Stream AC keeps the traditional actor-critic likelihood gradient:
+
+\[
+\delta
+\nabla_\theta\log\pi_\theta(A|S),
+\]
+
+while AVG uses the critic's action gradient:
+
+\[
+\nabla_AQ(S,A)
+\]
+
+and propagates it directly through the reparameterized action into the actor.
+
+So these papers provide two quite different answers to the same broad question:
+
+> How can a deep policy-gradient agent learn from one transition at a time
+> without replay or minibatches?
+
+Stream-X answers largely through **update control and eligibility traces**.
+
+AVG answers partly through a **lower-variance RG actor update and
+normalization/scaling**.
+
+Understanding which pieces remain effective after environment changes seems
+particularly relevant to my work.
+
+---
+
+## My thoughts / critique
+
+The most important contribution of Stream-X for me is not any one individual
+technique.
+
+Sparse initialization, eligibility traces, LayerNorm, and running data
+normalization all have substantial precedent.
+
+The interesting result is that combining the right set of techniques makes
+deep streaming RL genuinely competitive without replay or minibatches.
+
+ObGD is the component I find most distinctive.
+
+Rather than relying on a globally conservative learning rate to avoid rare
+catastrophic updates, it allows the nominal learning rate to remain large and
+reduces it when the current update appears dangerous.
+
+This seems particularly appropriate for streaming learning, where update
+statistics can vary substantially from one transition to the next.
+
+At the same time, the paper's experiments mainly establish stability and sample
+efficiency in fixed control environments.
+
+They do not directly answer what happens if the data-generating MDP changes
+abruptly.
+
+This distinction matters for several components.
+
+### Eligibility traces
+
+Immediately after
+
+\[
+M_A\rightarrow M_B,
+\]
+
+the eligibility trace still contains gradients associated with recently
+visited states under \(M_A\).
+
+Because the trace decays exponentially, this contamination is temporary, but
+it raises an interesting question:
+
+> Should eligibility traces be reset when a regime change is detected?
+
+### Observation and reward statistics
+
+These have much longer memory than eligibility traces.
+
+A sample running mean gives equal statistical weight to observations collected
+long before the current regime.
+
+These may therefore be considerably more problematic after an abrupt change.
+
+### ObGD
+
+ObGD may actually become particularly useful after a regime change.
+
+A new regime can suddenly generate large TD errors and gradients. Instead of
+allowing these transitions to produce enormous parameter updates, ObGD should
+automatically restrict them.
+
+However, there may also be a tradeoff:
+
+> Immediately after detecting a real regime change, large updates may be
+> exactly what is required for rapid adaptation.
+
+Therefore an optimizer designed to suppress unusual updates could potentially
+conflict with the need for fast regime adaptation.
+
+This is something worth testing rather than assuming.
+
+---
+
+## Connection to my research
+
+Like AVG, Stream-X gives me a strong baseline under the exact resource
+constraints I care about:
+
+\[
+\text{one transition}
+\rightarrow
+\text{one immediate update}
+\rightarrow
+\text{discard transition}.
+\]
+
+There is no replay buffer available to recover from or revisit an old regime.
+
+The persistent state of the learner instead consists of things such as:
+
+- actor parameters,
+- critic parameters,
+- eligibility traces,
+- observation normalization statistics,
+- reward scaling statistics,
+- optimizer state.
+
+This suggests a useful way of framing regime adaptation in strict streaming
+RL:
+
+> When the environment changes, which pieces of the learner's persistent state
+> should be retained, adapted, reset, or associated with a previous regime?
+
+Stream-X introduces another particularly interesting state variable compared
+with AVG:
+
+\[
+z_t.
+\]
+
+Because eligibility traces deliberately carry information from recent
+experience forward through time, their behavior around regime boundaries may
+be worth studying explicitly.
+
+---
+
+## Questions / possible experiments
+
+- Should actor and critic eligibility traces be reset after a detected MDP
+  change?
+
+- How quickly do eligibility traces naturally forget the old regime as a
+  function of \(\gamma\lambda\)?
+
+- Does ObGD help adaptation after an abrupt regime change by preventing
+  unstable TD updates, or does it slow adaptation by suppressing large but
+  informative updates?
+
+- Does the optimal effective-step-size bound change immediately after a regime
+  transition?
+
+- How do running observation statistics behave after
+
+\[
+    M_A\rightarrow M_B
+\]
+
+- How does Stream-X reward scaling behave when reward magnitude or reward
+  semantics change between regimes?
+
+- Would regime-specific normalization statistics improve recurring-regime
+  adaptation?
+
+- Which is more robust immediately after an MDP shift:
+  Stream AC's LG update or AVG's RG update?
+
+- Do Stream-X's LayerNorm networks maintain plasticity better than AVG's
+  penultimate normalization after repeated regime transitions?
+
+- Test whether Stream AC can handle
+
+\[
+    M_A\rightarrow M_B\rightarrow M_A
+\]
+
