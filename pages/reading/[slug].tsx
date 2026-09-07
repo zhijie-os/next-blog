@@ -92,7 +92,9 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
     if (!note) return { notFound: true }
 
     const allNotes = getSortedReadingNotes()
-    const adjacent = getAdjacentNotes(params.slug, allNotes)
+    // Previous/Next stays within the note's topic, like chapters in a section.
+    const topicNotes = allNotes.filter((n) => n.topic === note.topic)
+    const adjacent = getAdjacentNotes(params.slug, topicNotes)
     const toNavLink = (n: typeof adjacent.previous) => (n ? { slug: n.slug, title: n.title } : null)
     const previous = toNavLink(adjacent.previous)
     const next = toNavLink(adjacent.next)

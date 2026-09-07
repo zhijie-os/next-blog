@@ -1,0 +1,898 @@
+---
+title: "BAPR: Bayesian Amnesic Piecewise-Robust Reinforcement Learning for Non-Stationary Continuous Control"
+authors:
+  - Yifan Zhang
+  - Liang Zheng
+venue: arXiv preprint
+year: 2026
+dateRead: 2026-09-07
+topic: Non-Stationary Reinforcement Learning
+tags: [non-stationary-rl, change-point-detection, bocd, sac, robust-rl, context-conditioning, continual-learning]
+paperUrl: https://arxiv.org/abs/2605.16170
+codeUrl: https://github.com/erzhu419/BAPR
+description: BAPR combines Bayesian online change-point detection, context-conditioned reinforcement learning, and robust ensemble SAC to adapt conservatism after abrupt regime changes.
+draft: false
+---
+
+## Summary
+
+BAPR studies reinforcement learning in **piecewise-stationary environments**, where the environment remains approximately stationary for some period and then abruptly switches to another MDP.
+
+The main architecture combines three components:
+
+1. **RE-SAC** for robust ensemble reinforcement learning,
+2. **BOCD** for detecting when the environment may have changed,
+3. **context conditioning / RMDM** for identifying which regime the agent is currently in.
+
+The high-level decomposition is therefore:
+
+\[
+\text{WHEN did the regime change?}
+\quad\rightarrow\quad
+\text{BOCD}
+\]
+
+\[
+\text{WHICH regime are we in?}
+\quad\rightarrow\quad
+\text{context representation}
+\]
+
+\[
+\text{HOW should the policy respond?}
+\quad\rightarrow\quad
+\text{temporarily increase conservatism}
+\]
+
+The implementation uses a shared context-conditioned actor and critic rather than storing a separate policy for every regime.
+
+This is conceptually relevant to lifelong non-stationary RL, but the actual implementation relies heavily on replay, minibatches, target networks, critic ensembles, simulator-provided mode labels, and a finite regime family. These assumptions make it substantially different from strict streaming RL.
+
+---
+
+## Problem Setup
+
+The paper assumes a sequence of piecewise-stationary MDPs:
+
+\[
+M_1,M_2,\ldots
+\]
+
+where each MDP remains active for some interval before an abrupt change occurs.
+
+The authors emphasize a **regime staleness problem** for off-policy RL. After a switch from \(M_k\) to \(M_{k+1}\), the replay buffer may continue to contain transitions generated under the old dynamics, causing the critic to learn from stale data.
+
+BAPR therefore tries to detect the transition between regimes and modify the learner's behavior while it adapts to the new regime.
+
+The important distinction is that the paper separates:
+
+- **change detection**: did the environment recently change?
+- **mode identification**: which environment are we currently in?
+- **robust response**: how much should the agent trust its current estimates?
+
+---
+
+## Bayesian Online Change Detection
+
+BAPR uses Bayesian Online Change Detection (BOCD) to maintain a posterior over **run length**
+
+\[
+\rho_t(h)
+=
+P(h_t=h\mid \text{observations}_{1:t}),
+\]
+
+where \(h\) represents the number of steps since the most recent change point.
+
+A useful mental model is an array
+
+\[
+[\rho(0),\rho(1),\rho(2),\ldots].
+\]
+
+At each update:
+
+- the no-change hypotheses move one position to the right,
+- the \(h=0\) entry represents the hypothesis that a new change happened now,
+- all entries are reweighted by the likelihood of the newly observed signal,
+- the distribution is normalized again.
+
+BAPR caps the run-length space with a fixed maximum horizon \(H\), so the computational cost is \(O(H)\) rather than growing indefinitely with the agent lifetime.
+
+This is attractive compared with methods that explicitly maintain one model for every discovered regime, because the detector memory can remain bounded if \(H\) is fixed.
+
+However, BOCD alone only answers **when** something changed. It does not identify which previous regime has returned.
+
+---
+
+## Multi-Signal Surprise
+
+BOCD is not applied directly to raw transitions. BAPR first constructs a scalar **surprise signal**
+
+\[
+\xi_t
+=
+w_r |z_r|
++
+w_q
+\frac{\sigma_Q^t}{\bar{\sigma}_Q^t}
++
+w_\kappa
+\left|
+\kappa^t-\kappa^{t,\text{target}}
+\right|.
+\]
+
+It combines three signals.
+
+### Reward surprise
+
+\[
+z_r
+=
+\frac{r_t-\bar r_t}
+{\operatorname{std}(r_t)}.
+\]
+
+This detects shifts in the reward distribution.
+
+### Ensemble disagreement
+
+\[
+\frac{\sigma_Q^t}{\bar{\sigma}_Q^t}.
+\]
+
+The method maintains multiple critics. If the critics suddenly disagree more than usual, BAPR interprets this as increased epistemic uncertainty.
+
+### Robustness-penalty divergence
+
+\[
+\left|
+\kappa^t-\kappa^{t,\text{target}}
+\right|.
+\]
+
+This detects changes in the critic's aleatoric-risk-related regularization.
+
+The default surprise weights are approximately
+
+\[
+(w_r,w_q,w_\kappa)
+=
+(0.5,0.3,0.2).
+\]
+
+The useful general idea is that regime detection should probably not rely on one statistic alone. A change may appear first as a reward anomaly, dynamics prediction error, TD error, uncertainty jump, or some combination of them.
+
+---
+
+## An Unusual BOCD Likelihood
+
+BAPR models surprise using
+
+\[
+p(\xi\mid h)
+=
+\mathcal N
+\left(
+0,\,
+\sigma_0^2+\sigma_g h
+\right).
+\]
+
+The variance increases with run length.
+
+Therefore larger run-length hypotheses tolerate larger surprise:
+
+\[
+h\uparrow
+\quad\Rightarrow\quad
+\operatorname{Var}(\xi\mid h)\uparrow.
+\]
+
+This produces a somewhat unintuitive behavior:
+
+\[
+\text{large surprise}
+\Rightarrow
+\text{posterior mass shifts toward larger }h
+\Rightarrow
+\mathbb E[h]\uparrow.
+\]
+
+So BAPR does **not** primarily interpret a regime change as
+
+\[
+\rho(0)\uparrow.
+\]
+
+Instead it looks for a spike in the expected run length relative to its normal baseline.
+
+This is specific to BAPR's likelihood construction rather than a general property of BOCD.
+
+---
+
+## Adaptive Conservatism
+
+The BOCD posterior is reduced to the expected run length
+
+\[
+\bar h
+=
+\sum_{h=0}^{H-1}
+h\,\rho(h).
+\]
+
+They normalize this and compare it against an exponential moving average:
+
+\[
+\lambda_w
+=
+\max
+\left(
+0,
+\frac{\bar h}{H-1}
+-
+\bar\lambda_w^{EMA}
+\right).
+\]
+
+During stable operation,
+
+\[
+\lambda_w\approx0.
+\]
+
+After a surprising event,
+
+\[
+\bar h\uparrow
+\Rightarrow
+\lambda_w>0.
+\]
+
+This signal modifies the lower-confidence-bound coefficient
+
+\[
+\beta_{\text{eff}}
+=
+\beta_{\text{base}}
+-
+\lambda_w c_{\text{penalty}}.
+\]
+
+Since \(\beta_{\text{base}}<0\), increasing \(\lambda_w\) makes \(\beta_{\text{eff}}\) more negative and therefore penalizes uncertain Q estimates more strongly.
+
+Conceptually:
+
+\[
+\text{possible change}
+\rightarrow
+\text{trust current estimates less}
+\rightarrow
+\text{behave more conservatively}
+\]
+
+and after adaptation:
+
+\[
+\text{surprise subsides}
+\rightarrow
+\lambda_w\rightarrow0
+\rightarrow
+\beta_{\text{eff}}
+\rightarrow
+\beta_{\text{base}}.
+\]
+
+This soft response is more interesting than simply resetting the learner whenever a change detector fires.
+
+A general lesson is that a change detector does not necessarily need to trigger an all-or-nothing reset. Its confidence can continuously control the strength of adaptation.
+
+## Context Conditioning: Which Regime?
+
+BOCD only tells the agent something about **when** a change occurred. The policy also needs to know **which** regime it is currently facing.
+
+BAPR uses a lightweight MLP
+
+\[
+\phi_\psi:\mathcal S\rightarrow\mathbb R^{d_e}
+\]
+
+to produce a context embedding
+
+\[
+e
+=
+\frac{\phi_\psi(s)}
+{\|\phi_\psi(s)\|_2+\epsilon}.
+\]
+
+The embedding is concatenated to the state:
+
+\[
+Q(s\oplus e,a)
+\]
+
+and
+
+\[
+\pi(a\mid s,e).
+\]
+
+This allows one shared actor and critic to represent different behaviors for different regimes instead of maintaining
+
+\[
+\pi_1,\pi_2,\ldots,\pi_K.
+\]
+
+This is one of the most useful architectural ideas in the paper:
+
+\[
+\boxed{\text{one shared policy conditioned on a learned latent context}}
+\]
+
+rather than one policy per environment.
+
+---
+
+## RMDM Representation Learning
+
+The context encoder is trained using **Representation Learning for Mode Detection and Matching (RMDM)**.
+
+The loss tries to enforce two properties.
+
+### Same regime → similar embeddings
+
+Embeddings generated from states belonging to the same environment mode should have low variance.
+
+Conceptually:
+
+\[
+s_i,s_j\sim M_k
+\Rightarrow
+\phi(s_i)\approx\phi(s_j).
+\]
+
+### Different regimes → separated embeddings
+
+Mean embeddings for different modes should be pushed apart.
+
+Conceptually:
+
+\[
+M_i\neq M_j
+\Rightarrow
+e_i\not\approx e_j.
+\]
+
+The exact DPP / determinant formulation is not particularly important for understanding the method. It is essentially a supervised metric-learning objective:
+
+\[
+\text{same label}
+\rightarrow
+\text{pull together}
+\]
+
+\[
+\text{different label}
+\rightarrow
+\text{push apart}.
+\]
+
+---
+
+## Major Limitation: Supervised Mode Labels
+
+The RMDM representation requires the simulator to provide the true mode identity during training.
+
+For example, the simulator may tell the representation learner that a transition came from:
+
+\[
+\text{gravity}=0.7g
+\]
+
+or
+
+\[
+\text{gravity}=1.5g.
+\]
+
+These labels are not directly passed to the actor or critic, but they are used to supervise the context encoder.
+
+Therefore the representation-learning problem is substantially easier than online regime discovery.
+
+During deployment, the true mode label disappears and the encoder must generalize from the modes it observed during training.
+
+This introduces an important assumption:
+
+\[
+\boxed{\text{deployment regimes must share useful structure with the training regimes}}
+\]
+
+If training contains only gravity variations but deployment encounters an actuator failure, there is no reason the supervised embedding must produce a meaningful new context.
+
+The paper itself mentions fully unsupervised context discovery using BOCD-derived pseudo-labels as future work.
+
+For lifelong learning with potentially novel regimes, this is a major unresolved problem.
+
+---
+
+## Another Limitation: State-Only Context Inference
+
+The context encoder is
+
+\[
+e=\phi(s).
+\]
+
+It only observes the current state.
+
+This works when different MDPs induce sufficiently different state visitation distributions:
+
+\[
+p(s\mid M_i)
+\neq
+p(s\mid M_j).
+\]
+
+However, it cannot distinguish two environments if they produce the same observed state while having different dynamics.
+
+For example:
+
+\[
+s_t^A=s_t^B
+\]
+
+but
+
+\[
+P_A(s'|s,a)
+\neq
+P_B(s'|s,a).
+\]
+
+Then
+
+\[
+\phi(s_t^A)
+=
+\phi(s_t^B)
+\]
+
+by construction.
+
+A transition-based or recurrent context estimator would be more general:
+
+\[
+e_t
+=
+f(e_{t-1},s_t,a_t,r_t,s_{t+1}).
+\]
+
+Such an encoder could infer latent dynamics from how the environment responds to actions rather than relying only on correlations in the current state.
+
+---
+
+## Joint Run-Length and Regime Belief
+
+The paper additionally discusses a joint belief
+
+\[
+b(h,z)
+\]
+
+over:
+
+- run length \(h\),
+- latent regime cluster \(z\).
+
+Its marginals are
+
+\[
+\rho(h)
+=
+\sum_z b(h,z)
+\]
+
+and
+
+\[
+\mu(z)
+=
+\sum_h b(h,z).
+\]
+
+Thus
+
+\[
+\rho(h)
+\]
+
+contains temporal information, while
+
+\[
+\mu(z)
+\]
+
+contains regime-identity information.
+
+The paper motivates \(\mu(z)\) as a form of recurring-regime memory. If a previously encountered regime is mapped back to the same cluster \(z\), the critic receives approximately the same regime-conditioning signal during later visits.
+
+This gives a conceptual recurrence mechanism:
+
+\[
+A\rightarrow z_A,
+\qquad
+B\rightarrow z_B,
+\qquad
+A\rightarrow z_A.
+\]
+
+This is cheaper than storing a complete independent policy and critic for every regime.
+
+However, a consistent context label does not guarantee that the shared neural network has preserved the old solution. Training on regime \(B\) can still modify shared parameters and destroy the mapping associated with \(z_A\).
+
+Therefore:
+
+\[
+\boxed{\text{regime identification} \neq \text{catastrophic-forgetting solution}}
+\]
+
+Context conditioning reduces interference but does not eliminate it.
+
+---
+
+## Theory vs. Actual Implementation
+
+The theoretical BAPR operator assumes a belief-weighted mixture
+
+\[
+T_\rho^{BAPR}
+=
+\sum_m
+\rho(m)T_m
+\]
+
+over mode-specific Bellman operators.
+
+Under frozen beliefs and frozen robustness penalties, this operator is a standard contraction because a convex combination of contractions remains a contraction.
+
+The practical neural implementation is different.
+
+Maintaining separate critics and models for all modes would be expensive, so the actual algorithm instead uses:
+
+\[
+Q(s,e,a)
+\]
+
+as one shared context-conditioned critic ensemble and collapses the BOCD posterior into the scalar
+
+\[
+\beta_{\text{eff}}.
+\]
+
+The paper explicitly acknowledges that the contraction theorem applies to the idealized operator while the shared neural implementation introduces approximation error.
+
+For understanding the implementation, the detailed Lean proofs are unnecessary.
+
+One useful theoretical warning remains: regime inference should not be too tightly coupled to the critic being updated, because
+
+\[
+Q
+\rightarrow
+\text{belief}
+\rightarrow
+\text{Bellman target}
+\rightarrow
+Q
+\]
+
+can create a feedback loop.
+
+---
+
+## Actual Training Algorithm
+
+Putting everything together, the implementation is approximately:
+
+interact with environment
+        ↓
+store transition in replay buffer
+        ↓
+compute multi-signal surprise
+        ↓
+update BOCD posterior
+        ↓
+compute adaptive conservatism β_eff
+        ↓
+sample replay minibatch
+        ↓
+infer context e
+        ↓
+train context encoder with RMDM
+        ↓
+update critic ensemble
+        ↓
+update actor using adaptive LCB penalty
+        ↓
+update target critics
+
+
+
+## Experiments
+
+The main experiments use non-stationary versions of:
+
+- Hopper,
+- HalfCheetah,
+- Walker2d,
+- Ant.
+
+Dynamics are changed through gravity, friction, body parameters, and joint damping. Switch times are randomized and not directly revealed to the agent.
+
+The baselines are SAC, RE-SAC, ESCP, and BAPR.
+
+### Initial Continuous Benchmark
+
+BAPR obtains the highest final reward in three out of four environments in the initial benchmark, with the strongest results on HalfCheetah and Ant. Walker2d remains difficult.
+
+An interesting failure occurs on Walker2d: stochastic tripping can itself generate large surprise, causing BAPR to increase conservatism even though the environment did not actually change.
+
+This illustrates an important detector failure mode:
+
+\[
+\boxed{\text{unexpected learner behavior can look like an MDP change}}
+\]
+
+A surprise-based detector must distinguish environmental non-stationarity from ordinary stochasticity, exploration, or policy failure.
+
+---
+
+## Discrete Recurring-Regime Benchmark
+
+The paper also evaluates a more explicit recurring-regime setting with
+
+\[
+K=4
+\]
+
+modes and random dwell durations.
+
+This is the experiment most relevant to recurring environments.
+
+On HalfCheetah, BAPR and ESCP are essentially tied:
+
+\[
+\text{BAPR}
+=
+17{,}862\pm3{,}327
+\]
+
+\[
+\text{ESCP}
+=
+17{,}297\pm3{,}356.
+\]
+
+The paper concludes that the additional joint regime belief provides little benefit there.
+
+On Ant, BAPR performs much better than ESCP:
+
+\[
+20{,}679\pm3{,}402
+\]
+
+versus
+
+\[
+4{,}600\pm4{,}406.
+\]
+
+However, ordinary SAC already reaches
+
+\[
+17{,}171\pm194.
+\]
+
+Therefore the impressive \(+349\%\) improvement over ESCP is partly caused by ESCP performing unusually poorly. Compared with SAC, BAPR's gain is only around \(20\%\).
+
+---
+
+## Component Ablation
+
+The HalfCheetah ablation is particularly informative.
+
+Approximate performance drops are:
+
+\[
+\text{without RMDM}: -47\%
+\]
+
+\[
+\text{without BOCD}: -21\%
+\]
+
+\[
+\text{without adaptive }\beta: -9\%.
+\]
+
+Replacing BOCD with a simple heuristic also performs worse than the full method.
+
+The most important empirical observation is therefore:
+
+\[
+\boxed{\text{context representation contributes more than adaptive conservatism}}
+\]
+
+in this benchmark.
+
+This suggests that correctly representing the current regime may be more important than designing increasingly complicated responses after a change detector fires.
+
+---
+
+## BOCD Detection Quality
+
+The paper gives one concrete detection trace on Ant.
+
+There are:
+
+\[
+22
+\]
+
+true regime switches.
+
+BOCD detects:
+
+\[
+13
+\]
+
+of them.
+
+The median detection delay is:
+
+\[
+13\text{ iterations}
+\]
+
+and nine switches are missed within the 50-iteration detection window, corresponding to an empirical false-negative rate of approximately
+
+\[
+41\%.
+\]
+
+This means BOCD provides useful evidence but is far from a perfect regime detector.
+
+Useful evaluation metrics for future regime-detection work are therefore:
+
+\[
+\text{precision},
+\quad
+\text{recall},
+\quad
+\text{detection delay}.
+\]
+
+A detector should not only improve RL return; it should also explicitly demonstrate whether it actually detects the underlying switches.
+
+---
+
+## Replay-Belief Staleness
+
+An interesting negative result occurs when BAPR stores the active regime-belief vector with every replay transition.
+
+Conceptually:
+
+\[
+(s_t,a_t,r_t,s_{t+1},b_t).
+\]
+
+This sounds correct because an old transition should use the context that was active when the transition was generated.
+
+Empirically, however, it makes performance worse.
+
+Early in training, the regime tracker is inaccurate, so noisy belief vectors are stored permanently in the replay buffer. They continue contaminating later critic updates even after the detector improves.
+
+Removing per-transition belief storage improves the aggregate HalfCheetah mean and substantially reduces variance.
+
+This is another example of stale information created specifically by replay.
+
+Strict streaming RL avoids this particular failure mode because old transitions are not replayed.
+
+---
+
+## Limitations
+
+The paper contains several assumptions that make it less directly applicable to lifelong streaming RL.
+
+### 1. Replay-Based Learning
+
+BAPR uses a replay buffer and minibatch updates. Its motivating regime-staleness problem is itself largely replay-specific.
+
+### 2. Target Networks
+
+The method relies on target critics and therefore does not satisfy strict streaming-learning constraints.
+
+### 3. Large Critic Ensemble
+
+The implementation uses \(K=10\) critics. Most computational cost comes from these ensemble forward/backward passes.
+
+This is expensive compared with a single incremental actor-critic.
+
+### 4. Supervised Regime Representation
+
+RMDM requires simulator-provided mode IDs during training.
+
+This assumes the training regime family is known and labeled.
+
+### 5. State-Only Context Encoder
+
+The encoder infers regime identity from \(s\) alone and therefore assumes regimes induce distinguishable state distributions.
+
+It cannot generally identify different transition dynamics from an identical current state.
+
+### 6. Finite Regime Benchmarks
+
+The recurring-regime experiments use a finite set such as
+
+\[
+K=4.
+\]
+
+This is a closed-world setting:
+
+\[
+M_1\rightarrow M_2\rightarrow M_3\rightarrow M_4\rightarrow M_1.
+\]
+
+It does not test an open-ended sequence of potentially novel regimes:
+
+\[
+M_1,M_2,\ldots,M_t,\ldots
+\]
+
+throughout an arbitrarily long agent lifetime.
+
+### 7. Context Does Not Guarantee Retention
+
+Even if the same environment is mapped to the same context vector when it returns, shared actor/critic parameters may have changed while learning other regimes.
+
+Therefore BAPR does not solve catastrophic forgetting in general.
+
+---
+
+## Takeaways
+
+The most useful conceptual decomposition from BAPR is:
+
+\[
+\boxed{
+\text{WHEN}
+\neq
+\text{WHICH}
+\neq
+\text{HOW TO RESPOND}
+}
+\]
+
+Change detection, regime identification, and adaptation strategy are separate problems.
+
+BOCD provides a bounded-memory way to maintain temporal change evidence if the run-length horizon \(H\) is fixed. Context conditioning provides a way to represent multiple regimes using one shared actor and critic instead of one complete learner per MDP. Adaptive conservatism demonstrates that change confidence can continuously modulate learning behavior instead of triggering a hard reset.
+
+However, the paper largely solves these problems under much easier assumptions than strict streaming lifelong RL.
+
+For the setting I am interested in, the remaining problem is closer to:
+
+\[
+\boxed{
+\begin{aligned}
+&\text{Can an agent infer latent regime context online} \\
+&\text{from individual transitions, without labels or replay,} \\
+&\text{while using bounded memory and a fixed-capacity learner,} \\
+&\text{and exploit recurring structure without catastrophic forgetting?}
+\end{aligned}}
+\]
+
+BAPR provides useful components and failure cases, but does not directly solve this problem.
