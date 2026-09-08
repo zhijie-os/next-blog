@@ -1,0 +1,429 @@
+---
+title: "DARLING: Detection Augmented Reinforcement Learning with Non-Stationary Guarantees"
+authors:
+  - Argyrios Gerogiannis
+  - Yu-Han Huang
+  - Venugopal V. Veeravalli
+venue: arXiv preprint
+year: 2026
+dateRead: 2026-09-07
+topic: Piecewise Reinforcement Learning
+tags: [non-stationary-rl, piecewise-stationary-rl, change-point-detection, model-free-rl, regret]
+paperUrl: https://arxiv.org/abs/2604.16684
+description: DARLING is a model-free detection-restart framework for piecewise-stationary RL that periodically probes the environment for reward and transition changes and restarts the stationary learner when a change is detected.
+draft: false
+---
+
+## Summary
+
+DARLING studies **piecewise-stationary reinforcement learning**, where the environment stays stationary for some period and then changes abruptly at an unknown time.
+
+The method is a wrapper around a stationary RL learner \(L\):
+
+\[
+\text{stationary learning}
+\rightarrow
+\text{periodic probing}
+\rightarrow
+\text{change detection}
+\rightarrow
+\text{restart learner}.
+\]
+
+DARLING is **prior-free**, meaning that it does not know the number, timing, or magnitude of MDP changes in advance.
+
+It is also model-free: although DARLING monitors reward and transition statistics for detection, it does not learn a transition model for planning.
+
+---
+
+## Piecewise-Stationary Setting
+
+Training consists of \(T\) episodes, each with horizon \(H\).
+
+The MDP changes at unknown changepoints
+
+\[
+1=\nu_0 < \nu_1 < \cdots < \nu_{N_T} < \nu_{N_T+1}=T+1.
+\]
+
+Within each interval
+
+\[
+\{\nu_k,\ldots,\nu_{k+1}-1\},
+\]
+
+the reward and transition functions remain fixed.
+
+At a changepoint, at least one reward or transition function changes.
+
+Conceptually,
+
+\[
+M_1 \rightarrow M_2 \rightarrow M_3 \rightarrow \cdots.
+\]
+
+A prior-free learner does not know \(N_T\) in advance.
+
+---
+
+## Minimax Regret
+
+The paper derives minimax lower bounds for piecewise-stationary RL.
+
+A **minimax lower bound** describes the best possible worst-case performance: no matter what algorithm is designed, there exists some sufficiently hard environment where the regret must be at least this large.
+
+For tabular MDPs, the lower bound is
+
+\[
+\Omega\left(\sqrt{SAH^3N_TT}\right).
+\]
+
+For linear MDPs, it is
+
+\[
+\Omega\left(d\sqrt{H^3N_TT}\right).
+\]
+
+DARLING is designed to approximately match these bounds under its assumptions.
+
+This is the main theoretical contribution of the paper, although the regret analysis itself is not particularly relevant to the streaming deep-RL setting I am interested in.
+
+---
+
+## Detection-Restart Framework
+
+DARLING separates **learning** and **change detection**.
+
+Most episodes are ordinary learning episodes:
+
+\[
+\text{ordinary episode}
+\rightarrow
+\text{run and update learner }L.
+\]
+
+Periodically, DARLING inserts a probing episode:
+
+\[
+\text{probing episode}
+\rightarrow
+\text{random exploration}
+\rightarrow
+\text{update detector only}.
+\]
+
+The samples collected during probing are not used to train the base learner.
+
+If a change is detected:
+
+\[
+\text{change detected}
+\rightarrow
+\text{reset }L
+\rightarrow
+\text{clear detection histories}.
+\]
+
+This makes DARLING modular because the detection mechanism can wrap an existing stationary RL algorithm without changing its internal learning rule.
+
+---
+
+## What to Detect
+
+DARLING directly monitors changes in the MDP:
+
+\[
+r_h(s,a)
+\]
+
+and
+
+\[
+P_h(s'|s,a).
+\]
+
+This differs from methods that detect non-stationarity indirectly through learner-side quantities such as regret violations, Q disagreement, or TD errors.
+
+The main idea is:
+
+\[
+\boxed{\text{detect changes in the environment rather than changes in learner performance}}
+\]
+
+---
+
+## Where to Detect
+
+DARLING defines a probe set
+
+\[
+\mathcal P\subseteq\mathcal S\times\mathcal A\times[H].
+\]
+
+In the fully prior-free tabular case,
+
+\[
+\mathcal P=\mathcal S\times\mathcal A\times[H].
+\]
+
+The reason is that an MDP change could be hidden at only one arbitrary state-action-step triple.
+
+If that triple is never visited, the agent may never observe evidence that the environment changed.
+
+Therefore the fully prior-free guarantee requires coverage of every possible location where a change could occur.
+
+This highlights an important point:
+
+\[
+\boxed{\text{change detection requires informative exploration}}
+\]
+
+A converged policy may stop visiting suboptimal actions, so DARLING introduces dedicated probing episodes to maintain detection coverage.
+
+---
+
+## Linear MDPs and Feature Structure
+
+Probing every state is impossible when the state space is infinite.
+
+For linear MDPs, DARLING instead exploits a known feature representation
+
+\[
+\phi(s,a)\in\mathbb R^d.
+\]
+
+Rather than probing every state-action pair, it probes enough state-action pairs whose feature vectors span the relevant feature space.
+
+Conceptually,
+
+\[
+\text{cover every state}
+\rightarrow
+\text{cover enough independent feature directions}.
+\]
+
+This reduces the detection problem when the linear structure is valid.
+
+However, this assumption does not directly apply to general nonlinear continuous-control environments.
+
+## When to Probe
+
+DARLING performs approximately one probing episode every
+
+\[
+\left\lceil\frac{1}{\alpha_k}\right\rceil
+\]
+
+episodes.
+
+Here \(k\) is the number of detected restarts so far.
+
+For the tabular theoretical result,
+
+\[
+\alpha_k\propto\sqrt{k}.
+\]
+
+Therefore,
+
+\[
+k\uparrow
+\rightarrow
+\alpha_k\uparrow
+\rightarrow
+\text{probing becomes more frequent}.
+\]
+
+The intuition is that after observing more previous changes, DARLING allocates more effort to detecting future changes.
+
+This creates a tradeoff:
+
+\[
+\text{more probing}
+\rightarrow
+\text{faster detection},
+\]
+
+but also
+
+\[
+\text{more probing}
+\rightarrow
+\text{less reward-oriented interaction}.
+\]
+
+---
+
+## How to Detect
+
+DARLING reduces change detection to many scalar **mean-shift tests**.
+
+For rewards, each probed triple maintains a history
+
+\[
+\mathcal H^{(r)}_{s,a,h}.
+\]
+
+For transitions, DARLING maintains binary histories indexed by
+
+\[
+(s,a,h,s').
+\]
+
+For example, if repeated next states are
+
+\[
+s_2,\;s_1,\;s_2,\;s_2,
+\]
+
+then the binary history corresponding to \(s_2\) is
+
+\[
+1,\;0,\;1,\;1.
+\]
+
+Its mean estimates
+
+\[
+P(s_2|s,a).
+\]
+
+If later transitions become
+
+\[
+s_1,\;s_1,\;s_1,
+\]
+
+the full history becomes
+
+\[
+1,\;0,\;1,\;1,\;0,\;0,\;0.
+\]
+
+A change detector such as GLR considers possible changepoints in the accumulated history and tests whether the sequence is better explained by different means before and after a split.
+
+If any reward or transition stream triggers, DARLING declares a regime change.
+
+---
+
+## Restarting the Learner
+
+When DARLING detects an MDP change, it performs a **full reset** of the base learner \(L\).
+
+In the paper, \(L\) is a tabular or linear RL algorithm.
+
+For a neural actor-critic, the analogous operation would be closer to
+
+\[
+\theta_\pi,\theta_Q
+\leftarrow
+\text{reinitialize},
+\]
+
+together with resetting optimizer state and other learner statistics.
+
+This completely removes stale information from the previous MDP, but it also removes useful knowledge.
+
+For example,
+
+\[
+A\rightarrow B\rightarrow A.
+\]
+
+After the transition to \(B\), DARLING discards what it learned in \(A\). When \(A\) returns, there is no mechanism to recover the previous solution.
+
+Therefore DARLING does not address recurring regimes or catastrophic forgetting.
+
+---
+
+## Limitations
+
+I do not find DARLING particularly useful as a practical method for strict streaming deep RL.
+
+### Large Detection State
+
+In the tabular case, reward histories are indexed by
+
+\[
+(s,a,h),
+\]
+
+while transition histories are indexed by
+
+\[
+(s,a,h,s').
+\]
+
+The number of transition streams can therefore scale approximately as
+
+\[
+O(S^2AH),
+\]
+
+which becomes expensive when the number of states is large.
+
+### Detection Histories
+
+DARLING does not use a replay buffer for learning, but it still maintains histories of rewards and transitions for detection.
+
+This conflicts with the stronger streaming constraint where memory should remain fixed and adaptation should occur from individual transitions.
+
+### Dedicated Probing
+
+The method deliberately sacrifices some episodes to random exploration purely for change detection.
+
+This is useful theoretically because a change can remain hidden in regions not visited by the current policy, but dedicated probing becomes difficult in large or continuous action spaces.
+
+### Finite Action Space
+
+Even the linear-MDP setting assumes a finite action space.
+
+This makes the theoretical framework poorly matched to MuJoCo-style continuous control.
+
+### Complete Restart
+
+The largest practical limitation is
+
+\[
+\boxed{\text{detect change} \rightarrow \text{reset learner}.}
+\]
+
+This solves staleness by deleting old knowledge instead of selectively adapting it.
+
+It wastes useful training from previous regimes and provides no mechanism for recurring MDPs.
+
+---
+
+## Takeaways
+
+The most useful idea from DARLING is that **detectability depends on exploration**.
+
+If the environment changes only in a state-action region that the current policy never visits, then no passive detector can reliably observe that change.
+
+There is therefore an unavoidable tradeoff between
+
+\[
+\text{maximizing reward}
+\]
+
+and
+
+\[
+\text{collecting information for change detection}.
+\]
+
+DARLING provides a clean theoretical treatment of this problem and strong worst-case regret guarantees, but its detection histories, probing requirements, finite-action assumptions, and complete learner resets make it poorly suited to the streaming RL problem I am interested in.
+
+The more relevant question for my setting is:
+
+\[
+\boxed{
+\text{Can a model-free streaming learner detect and adapt to MDP changes}
+}
+\]
+
+\[
+\boxed{
+\text{with fixed-size memory, no replay, and no full reset,while preserving useful knowledge across recurring regimes?}
+}
+\]
