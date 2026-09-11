@@ -1,0 +1,124 @@
+---
+title: "Learning to Foresee: Unveiling the Unlocking Efficiency of On-Policy Distillation"
+authors:
+  - Yuchen Cai
+  - Ding Cao
+  - Liang Lin
+  - Chunxi Luo
+  - Xin Xu
+  - Kai Yang
+  - Weijie Liu
+  - Saiyong Yang
+  - Tianxiang Zhao
+  - Guangzhong Sun
+  - Guiquan Liu
+  - Junfeng Fang
+venue: arXiv preprint
+year: 2026
+dateRead: 2026-09-10
+topic: LLM Post-Training
+tags: [on-policy-distillation, llm-post-training, reinforcement-learning, low-rank-updates, optimization]
+paperUrl: https://arxiv.org/abs/2605.11739
+description: This paper studies why on-policy distillation is more parameter-efficient than RL and argues that OPD develops foresight by identifying useful modules and stable low-rank update directions early in training.
+draft: false
+---
+
+## Motivation
+
+On-policy distillation (OPD) is substantially more training-efficient than RL-based post-training methods such as PPO, GRPO, and DAPO.
+
+The usual explanation is that OPD provides denser and more stable supervision. This paper instead studies the problem from the perspective of **parameter dynamics**:
+
+> Why does OPD obtain larger reasoning improvements with smaller parameter changes?
+
+The authors argue that OPD develops a form of **foresight** early in training: it quickly discovers both **where parameters should change** and **which directions they should move in**.
+
+## 1. Module-Allocation Foresight
+
+OPD and RL do not distribute their parameter updates equally across the network.
+
+By injecting local trained updates back into the base model, the authors measure how much reasoning performance is recovered by updates from different layers and module types.
+
+The main observations are:
+
+- MLP updates contribute more to reasoning performance than attention updates.
+- Middle-layer MLPs are particularly important.
+- RL makes relatively large updates even in regions with low marginal utility.
+- OPD concentrates more of its update budget on functionally useful regions.
+
+Thus, OPD is more selective about **where** it changes the model.
+
+## 2. Early Low-Rank Lock-in
+
+The authors then analyze the geometry of the parameter updates using SVD.
+
+OPD updates are more strongly concentrated in a small number of dominant singular directions than RL updates. More importantly, the dominant subspace found early in OPD training is already strongly aligned with the final update subspace.
+
+Therefore, later OPD training appears to mostly continue moving within directions that were discovered early.
+
+This gives the second form of foresight:
+
+> OPD discovers not only where to update, but also the useful **update directions** early in training.
+
+Norm-scaling experiments further show that scaling an early OPD update along these already-established directions can recover a large fraction of the later model's performance. This suggests that early checkpoints are often missing **update magnitude**, rather than fundamentally missing the correct directions.
+
+## EffOPD
+
+Based on this observation, the authors propose **EffOPD**: instead of waiting for normal OPD training to gradually move farther along an already-stable direction, extrapolate along that direction.
+
+EffOPD performs extrapolation at exponentially spaced checkpoints
+
+$$
+t = 2^n.
+$$
+
+At each checkpoint, the recent parameter displacement is used as an estimate of the future update direction:
+
+$$
+\Delta_n = W_{2^n} - W_{2^{n-1}}.
+$$
+
+For the first checkpoint,
+
+$$
+\Delta_0 = W_1 - W_0.
+$$
+
+EffOPD generates five increasingly aggressive extrapolation candidates:
+
+$$
+\widetilde{W}_{n,k}
+=
+W_{2^n} + 2k\Delta_n,
+\qquad k=1,\ldots,5.
+$$
+
+A small validation set of 50 examples is used to evaluate the candidates sequentially.
+
+1. Start with the current OPD checkpoint as the accepted model.
+2. Test the candidate with $k=1$.
+3. If validation performance improves or stays equal, accept it and test $k=2$.
+4. Continue increasing $k$ while performance improves.
+5. Stop immediately when a candidate performs worse.
+6. Continue training from the best accepted parameters.
+
+If even $k=1$ fails, EffOPD performs no extrapolation and reduces to ordinary OPD.
+
+The idea is therefore very simple:
+
+$$
+\text{stable early direction}
+\quad\Rightarrow\quad
+\text{move farther along that direction}.
+$$
+
+The validation check prevents the algorithm from extrapolating too far when the local direction is no longer predictive.
+
+## Takeaway
+
+The main contribution of this paper is not a complicated new training objective. It provides an empirical explanation for why OPD is efficient:
+
+- **Module-level foresight:** OPD concentrates updates on regions that are useful for reasoning.
+- **Direction-level foresight:** its dominant low-rank update directions stabilize early and align with the final solution.
+
+EffOPD directly exploits the second property through parameter extrapolation and reports roughly **3× training acceleration** while maintaining comparable final performance.
