@@ -1,0 +1,226 @@
+---
+title: Efficient Reinforcement Learning by Reducing Forgetting with Elephant Activation Functions
+authors:
+  - Qingfeng Lan
+  - Gautham Vasan
+  - A. Rupam Mahmood
+venue: arXiv
+year: 2025
+dateRead: 2026-09-21
+topic: Continual Reinforcement Learning
+tags: [reinforcement-learning, catastrophic-forgetting, sparse-representations, sparse-gradients, activation-functions, local-elasticity]
+paperUrl: https://arxiv.org/abs/2509.19159
+description: Reducing catastrophic forgetting in reinforcement learning with Elephant activation functions that produce sparse representations and sparse gradients.
+draft: false
+---
+
+
+## Taylor Expansion
+
+First-order Taylor expansion
+
+\[
+f(x)
+=
+f(a)
++
+f'(a)(x-a)
++
+O\left((x-a)^2\right)
+\]
+
+
+Second-order Taylor expansion
+
+\[
+f(x)
+=
+f(a)
++
+f'(a)(x-a)
++
+\frac{1}{2}f''(a)(x-a)^2
++
+O\left((x-a)^3\right)
+\]
+
+
+## Catastrophic Forgetting via Training Dynamics
+
+Let a scalar-valued function $f_w(x)$ be represented by a neural network,
+parameterized by $w$, with input $x$. $F(x)$ is the true value function and
+$L(f,F,x)$ is the loss function.
+
+\[
+    w' = w + \Delta_w
+\]
+
+If using SGD,
+
+\[
+    w' = w - \alpha \nabla_wL(f,F,x_t)
+\]
+
+\[
+    \Delta_w = w' - w = \alpha\nabla_wL(f,F,x_t) = -\alpha\nabla_fL(f,F,x_t)\nabla_wf_w(x_t)
+\]
+
+and the paper gives Equation 1 using the Taylor expansion:
+
+\[
+    f_w'(x) - f_w(x) - \alpha\nabla_fL(f, F, x_t)\left<\nabla_wf_w(x_t),\nabla_wf_w(x_t)\right> + O(\Delta_w^2)
+\]
+
+I might want to show the derivation. Let
+
+\[
+    g(w):=f_w(x)
+\]
+
+which expands to
+
+\[
+    g(w+\Delta_w) = g(w) + \nabla_w g(w)^\top \Delta_w = O(||\Delta_w||)^2 
+\]
+
+Now substitute back:
+
+\[
+    g(w+\Delta_w) = f_{w+\Delta_w}(x) = f_{w'}(x)
+\]
+
+and
+
+\[
+    \nabla_wg(w)^\top \Delta_w = \nabla_wf_w(x)^\top \Delta_w
+\]
+
+Looking back at the original $g(w+\Delta_w)$, we now have
+
+\[
+    f_{w'}(x) = f_w(x) + \nabla_w f_w(x)^\top\Delta_w + O(||\Delta_w||^2)
+\]
+
+and the neural tangent kernel (NTK) is $\left<\nabla_wf_w(x), \nabla_wf_w(x_t)\right>$.
+
+I personally write it as $K_w(x,x_t) = \left<\nabla_wf_w(x), \nabla_wf_w(x_t)\right>$.
+
+
+The paper argues for three properties:
+
+- Property 1 (error correction). For $x=x_t$, $\left<\nabla_wf_w(x), \nabla_wf_w(x_t)\right> \neq 0$.
+- Property 2 (zero forgetting). For $x\neq x_t$, $\left<\nabla_wf_w(x), \nabla_wf_w(x_t)\right> = 0$.
+- Property 3 (mild forgetting). $\left<\nabla_wf_w(x), \nabla_wf_w(x_t)\right> \approx 0$ for $x$ that is dissimilar to $x_t$.
+
+
+Property 1 is easy to see: if $x = x_t$ and there is a prediction error, the kernel should not be zero,
+otherwise no update is being done.
+
+The same goes for Property 2: if $x\neq x_t$, we should not update any of the parameters that affect $x$, so the
+kernel has to be zero for absolutely zero forgetting.
+
+Property 3 relaxes this: the kernel value is mild, approximately zero. There will still be interference and
+forgetting, but only mildly.
+
+## Success and Failure of Sparse Representation
+
+The paper states that sparse representations only reduce forgetting in linear function approximation, but not
+in nonlinear function approximation.
+
+Linear function approximation, e.g. $f_w(w) = w^\top\phi(x)$, where $phi(x)$ is fixed and only $w$ is trained. The
+prediction is a weighted sum of fixed features:
+
+\[
+  \phi(x) = \begin{pmatrix}
+    tanh(x)  \\
+    tanh(x)
+  \end{pmatrix}
+\]
+,
+\[
+    f_w(x) = w_1\phi_1(x) = w_2\phi_2(x).
+\]
+
+Nonlinear function approximation
+
+\[
+    f_{u,v,b}(x)=utanh(vx+b)
+\]
+
+where $u, v, b$ are trainable. The activation tanh has no parameters of its own, but the trainable $v, b$ are inside
+it, so when $v$ or $b$ changes, the feature itself changes. The features are learned.
+
+In the linear case, it is easy to see that $\nabla_w f_w(x) = \phi(x)$. Together with Equation 1,
+
+\[
+    f_w'(x) - f_w(x) - \alpha\nabla_fL(f,F,x_t)\phi(x)^\top\phi(x)
+\]
+
+Property 1 holds because $||\phi(x_t)||_2^2 \neq 0$ when $x=x_t$.
+Property 3 holds because, when $x=x_t$, $\left<\phi(x), \phi(x_t) \right> \approx 0$.
+This is why sparse representation mitigates catastrophic forgetting in linear function approximation.
+
+
+In the nonlinear case, using $\phi_\theta(x) = \sigma(Vx+b)$, we have
+
+\[
+    \left< \nabla_w f_w(x), \nabla_w f_w(x_t) \right> = \phi_\theta^\top \phi_\theta + u^\top u (x^\top x_t + 1) + {\phi_{\theta}'}^\top \phi_{\theta}'
+\]
+
+Property 3 does not hold here, even if $\phi_\theta^\top \phi_\theta \approx 0$,
+because it is not guaranteed that $u^\top u (x^\top x_t + 1) + {\phi_{\theta}'}^\top \phi_{\theta} \approx 0$.
+
+
+## Sparsity
+
+\[
+    A_{\epsilon,C}
+=
+\left\{x \in [-C,C] : |\sigma(x)| \le \epsilon\right\}.
+\]
+
+\[
+    S_{\epsilon,C}(\sigma)
+=
+\frac{\left|\left\{x \mid |\sigma(x)| \leq \epsilon,\; x \in [-C,C]\right\}\right|}
+{\left|\left\{x \mid x \in [-C,C]\right\}\right|}
+=
+\frac{\left|\left\{x \mid |\sigma(x)| \leq \epsilon,\; x \in [-C,C]\right\}\right|}
+{2C}.
+\]
+
+This is basically just
+
+\[
+    S_{\epsilon,C}(\sigma)
+=
+\frac{\text{length of } A_{\epsilon,C}}
+{\text{length of }\left[-C, C\right]}
+=
+\frac{\text{length of inputs producing near-zero outputs}}
+{2C}.
+\]
+
+
+We can then define the sparsity $S(\sigma)$ as
+
+\[
+    S(\sigma)
+=
+\lim_{\epsilon \to 0^{+}}
+\lim_{C \to \infty}
+S_{\epsilon,C}(\sigma).
+\]
+
+and we call $\sigma$ a sparse function when $S(\sigma)=1$.
+
+For example, tanh'(x) is a sparse function, while tanh(x) itself is not.
+
+## Elephant Activation Functions
+
+\[
+    Elephant(x) = \frac{h}{1+|\frac{x}{a}|^d}
+\]
+
+where $a$ controls the width of the function and hence the sparsity of the function itself, $h$ controls the height
+of the function, and $d$ controls the sparsity of the gradients of the elephant function.
