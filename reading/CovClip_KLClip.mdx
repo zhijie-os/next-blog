@@ -1,0 +1,542 @@
+---
+title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language Models
+authors:
+  - Ganqu Cui
+  - Yuchen Zhang
+  - Jiacheng Chen
+  - Lifan Yuan
+  - Zhi Wang
+  - Yuxin Zuo
+  - Haozhan Li
+  - Yuchen Fan
+  - Huayu Chen
+  - Weize Chen
+  - Zhiyuan Liu
+  - Hao Peng
+  - Lei Bai
+  - Wanli Ouyang
+  - Yu Cheng
+  - Bowen Zhou
+  - Ning Ding
+venue: arXiv
+year: 2025
+dateRead: 2026-09-24
+topic: Reinforcement Learning for LLM Reasoning
+tags: [reinforcement-learning, llm-reasoning, policy-entropy, entropy-collapse, policy-gradient, grpo, exploration]
+paperUrl: https://arxiv.org/abs/2505.22617
+description: Why policy entropy collapses during RL for reasoning LLMs, how the entropy change reduces to a covariance between log-probability and logit change, and two covariance-based fixes, Clip-Cov and KL-Cov.
+draft: false
+---
+
+
+## Background: LLMs Are Softmax Policies
+
+An LLM is a softmax policy over its vocabulary. The state $s$ is the prompt plus every token generated so far,
+and the action $a$ is the next token.
+
+\[
+\pi_\theta(a \mid s) = \frac{\exp(z_{s,a})}{\sum_{a' \in \mathcal{A}} \exp(z_{s,a'})}
+\]
+
+Here $z_{s,a}$ is the output logit of action $a$ given state $s$, with $s \sim d_{\pi_\theta}$ and
+$a \sim \pi_\theta^k(\cdot \mid s)$. Two facts I kept using:
+
+- Only differences between logits matter. Adding the same constant to every logit leaves $\pi_\theta$ unchanged.
+- $\frac{d}{dx}e^x = e^x$, which makes the softmax derivative simple:
+
+\[
+\frac{\partial \pi(b)}{\partial z_a} = \pi(b)\left(\mathbb{1}\{a=b\} - \pi(a)\right)
+\]
+
+
+### Where the logits come from
+
+A transformer layer is attention plus an MLP, each wrapped in RMSNorm and a residual connection:
+
+\[
+\begin{aligned}
+x &\leftarrow x + \mathrm{Attention}(\mathrm{RMSNorm}(x)) \\
+x &\leftarrow x + \mathrm{MLP}(\mathrm{RMSNorm}(x))
+\end{aligned}
+\]
+
+Attention mixes information across positions; the MLP transforms each position on its own. After the last layer
+and a final RMSNorm, the LM head turns the hidden state into logits:
+
+\[
+z = Wh, \qquad z_a = w_a^\top h
+\]
+
+- $W$ has one row per token, shape `vocab_size × hidden_size`. It starts random and is learned during pretraining.
+- $h$ is the final hidden state at a position. All the context lives here; $W$ is the same at every position.
+
+The input embedding *encodes* (token IDs → vectors) and the LM head *decodes* (final hidden state → one logit per
+vocabulary token). In full-parameter RL, which is what this paper does, the LM head is still trainable; under LoRA
+it is usually frozen. Either way its structure comes from pretraining, and RL's small learning rate adjusts it
+rather than reorganizing it.
+
+
+### Tabular vs. LLM softmax
+
+The theory in the paper assumes a *tabular* softmax policy, where every state-action pair has its own parameter:
+
+\[
+z_{s,a} = \theta_{s,a}
+\]
+
+An LLM is not tabular. Its logits come from shared weights, $z_{s,a} = w_a^\top h_\theta(s)$, so one gradient step
+moves logits at many states at once. This matters later: Lemma 1 only needs a softmax, so it holds for LLMs as long
+as we plug in the actual logit change. Proposition 1 and Theorems 1-2 compute that logit change assuming
+tabularity, so for LLMs they are approximations.
+
+
+## The Predictable Collapse of Entropy
+
+Without entropy or KL regularization, entropy drops sharply at the start of RL and keeps falling toward zero, while
+validation accuracy rises and then plateaus. Across 11 runs, 73% of the entropy drop and 76% of the performance
+gain happen in the first 200 of 2,400 steps.
+
+Accuracy $R$ and entropy $\mathcal{H}$ fit
+
+\[
+R = -a\exp(\mathcal{H}) + b
+\]
+
+so the ceiling at $\mathcal{H} = 0$ is $R = -a + b$. (The takeaway box in Section 2 writes
+$-a\exp(\mathcal{H} + b)$; Eq. 6 is the correct form.) Fitting on only the first 36 steps predicts the next 200
+with an RMSE of about 0.9% on math and 1.2% on code. The coefficients look independent of the algorithm (GRPO,
+RLOO, PRIME and REINFORCE++ collapse onto one curve) and scale log-linearly with model size within Qwen2.5.
+
+One caveat: entropy and accuracy are both smooth, monotone functions of the training step, so a smooth monotone fit
+between them is partly expected. The early-prediction result is the more convincing part.
+
+
+## Entropy as Average Surprise
+
+\[
+\mathcal{H}(\pi) = \mathbb{E}_{a \sim \pi}\left[-\log \pi(a)\right] = -\sum_a \pi(a)\log\pi(a)
+\]
+
+- $\log\pi(a) \le 0$ is the log-likelihood of token $a$.
+- $-\log\pi(a)$ is the surprise of token $a$.
+- Entropy is the *average* surprise, weighted by $\pi$. Surprise belongs to one token; entropy belongs to the whole
+  distribution at a position.
+
+The log comes from additivity. Surprise should add for independent events, $I(pq) = I(p) + I(q)$, and $-\log p$ is
+the only continuous function that does this while being zero at $p = 1$ and decreasing in $p$. The same property
+lets sequence entropy split into per-token terms, which is why averaging token-level entropy makes sense.
+
+Example with $\pi = [0.7,\ 0.2,\ 0.1]$:
+
+\[
+\mathcal{H} = -\left(0.7\log 0.7 + 0.2\log 0.2 + 0.1\log 0.1\right) \approx 0.80 \text{ nats}
+\]
+
+$\exp(\mathcal{H})$ is the effective number of choices: 1 nat is roughly 3 live options per token, 0.1 nat is
+roughly one.
+
+
+## Lemma 1: Entropy Change Is a Covariance
+
+\[
+\mathcal{H}(\pi_\theta^{k+1}) - \mathcal{H}(\pi_\theta^{k})
+\approx
+\mathbb{E}_{s \sim d_{\pi_\theta}}\left[
+-\mathrm{Cov}_{a \sim \pi_\theta^k(\cdot \mid s)}\left(
+\log \pi_\theta^k(a \mid s),\;
+z^{k+1}_{s,a} - z^{k}_{s,a}
+\right)\right]
+\]
+
+- $\log\pi_\theta^k(a \mid s)$ is the log-prob *before* the update.
+- $z^{k+1}_{s,a} - z^{k}_{s,a}$ is how much the logit moved.
+
+The covariance is taken over the tokens at one state, weighted by $\pi$. It asks: are the tokens that are already
+likely the ones whose logits go up?
+
+
+### Derivation
+
+I wanted every step. Work at one state and write $\Delta z_a = z^{k+1}_{s,a} - z^{k}_{s,a}$.
+
+**Step 1: first-order Taylor expansion.** Entropy is a function of all the logits, so
+
+\[
+\mathcal{H}(z + \Delta z) \approx \mathcal{H}(z) + \sum_a \frac{\partial \mathcal{H}}{\partial z_a}\Delta z_a
+\]
+
+and with $\Delta\mathcal{H} = \mathcal{H}(z + \Delta z) - \mathcal{H}(z)$,
+
+\[
+\Delta\mathcal{H} \approx \sum_a \frac{\partial \mathcal{H}}{\partial z_a}\Delta z_a
+\]
+
+**Step 2: derivative of softmax (quotient rule).** With $Z = \sum_c e^{z_c}$ and
+$\partial Z / \partial z_a = e^{z_a}$:
+
+\[
+\frac{\partial \pi(a)}{\partial z_a} = \frac{e^{z_a}Z - e^{z_a}e^{z_a}}{Z^2} = \pi(a)\left(1 - \pi(a)\right),
+\qquad
+\frac{\partial \pi(b)}{\partial z_a} = -\frac{e^{z_b}e^{z_a}}{Z^2} = -\pi(b)\pi(a) \quad (b \neq a)
+\]
+
+Both cases together:
+
+\[
+\frac{\partial \pi(b)}{\partial z_a} = \pi(b)\left(\mathbb{1}\{a=b\} - \pi(a)\right)
+\]
+
+**Step 3: derivative of entropy with respect to one probability (product rule).**
+
+\[
+\frac{\partial \mathcal{H}}{\partial \pi(b)} = -\left(\log\pi(b) + 1\right)
+\]
+
+**Step 4: chain rule.** Changing $z_a$ changes every $\pi(b)$, so sum over $b$:
+
+\[
+\frac{\partial \mathcal{H}}{\partial z_a}
+= \sum_b \frac{\partial \mathcal{H}}{\partial \pi(b)}\frac{\partial \pi(b)}{\partial z_a}
+= -\sum_b \left(\log\pi(b) + 1\right)\pi(b)\left(\mathbb{1}\{a=b\} - \pi(a)\right)
+\]
+
+**Step 5: split the sum.** The indicator keeps only $b = a$ in the first part, and $\pi(a)$ factors out of the
+second:
+
+\[
+\begin{aligned}
+\frac{\partial \mathcal{H}}{\partial z_a}
+&= -\pi(a)\left(\log\pi(a) + 1\right) + \pi(a)\sum_b \pi(b)\left(\log\pi(b) + 1\right) \\
+&= -\pi(a)\left(\log\pi(a) + 1\right) + \pi(a)\left(\overline{\log\pi} + 1\right) \\
+&= -\pi(a)\left(\log\pi(a) - \overline{\log\pi}\right)
+\end{aligned}
+\]
+
+where $\overline{\log\pi} = \sum_b \pi(b)\log\pi(b) = -\mathcal{H}$. The $+1$'s cancel because
+$\sum_b \pi(b) = 1$.
+
+**Step 6: plug into Step 1.**
+
+\[
+\Delta\mathcal{H}
+\approx -\sum_a \pi(a)\left(\log\pi(a) - \overline{\log\pi}\right)\Delta z_a
+= -\mathbb{E}_{a \sim \pi}\left[\left(\log\pi(a) - \overline{\log\pi}\right)\Delta z_a\right]
+\]
+
+**Step 7: recognize the covariance.** With $X = \log\pi$ and $Y = \Delta z$,
+
+\[
+\mathbb{E}\left[(X - \bar X)(Y - \bar Y)\right]
+= \mathbb{E}\left[(X - \bar X)Y\right] - \bar Y\,\mathbb{E}\left[X - \bar X\right]
+= \mathbb{E}\left[(X - \bar X)Y\right]
+\]
+
+since $\mathbb{E}[X - \bar X] = \mathbb{E}[X] - \bar X = 0$: the $\pi$-weighted deviations from the $\pi$-weighted
+mean cancel. So centering $\Delta z$ is optional, and
+
+\[
+\Delta\mathcal{H} \approx -\mathrm{Cov}_{a \sim \pi}\left(\log\pi(a),\ \Delta z_a\right)
+\]
+
+Nobody negates anything by choice; the minus falls out of Step 5. Likely tokens have a negative entropy gradient,
+so boosting them lowers entropy.
+
+**Numeric check.** $\pi = [0.7,\ 0.2,\ 0.1]$ and $\Delta z = [1,\ 0,\ 0]$. The centered log-probs are
+$[+0.45,\ -0.81,\ -1.50]$, so
+
+\[
+\mathrm{Cov} \approx 0.7 \times 0.45 \times 1 = 0.31, \qquad \Delta\mathcal{H} \approx -0.31
+\]
+
+The exact change is $0.80 \to 0.48$, or $-0.32$.
+
+
+### Reading the covariance
+
+Covariance measures whether two quantities move together:
+
+- $\mathrm{Cov} > 0$: above-average $X$ goes with above-average $Y$, or below with below.
+- $\mathrm{Cov} < 0$: they move in opposite directions.
+- $\mathrm{Cov} = 0$: no linear relationship.
+
+So a positive covariance of $(\log\pi, \Delta z)$ means entropy goes down, and a negative one means entropy goes up.
+
+"High probability" means $\log\pi$ is above its $\pi$-weighted average, i.e. $\log\pi(a) > -\mathcal{H}$: the token
+is less surprising than average. It does not mean $\log\pi > 0$, which never happens. The zero point doesn't matter
+anyway, since $\mathrm{Cov}(X + c, Y) = \mathrm{Cov}(X, Y)$.
+
+| | Logit goes up | Logit goes down |
+|---|---|---|
+| **High-probability token** ($X - \bar X > 0$) | entropy ↓ | entropy ↑ |
+| **Low-probability token** ($X - \bar X < 0$) | entropy ↑ | entropy ↓ |
+
+Only *relative* logit changes matter: $\Delta z = [+1,\ +1,\ +1]$ gives zero covariance and no entropy change. And
+$\Delta\mathcal{H}$ is a rate, not a level. A small positive covariance still means entropy keeps falling, just
+slowly.
+
+
+## Theorems 1 & 2: Plugging in the Update Rule
+
+Lemma 1 says nothing about *how* the logits change. That comes from the training algorithm.
+
+**Advantage.** $A(s,a) = Q(s,a) - V(s)$ is how much better action $a$ is than the policy's average from $s$. It
+averages to zero under the policy, $\mathbb{E}_{a \sim \pi}[A(s,a)] = 0$ (Lemma 3 in the appendix). GRPO estimates
+it per response, and every token in the response shares it:
+
+\[
+A = \frac{r(y) - \mathrm{mean}(r)}{\mathrm{std}(r)}
+\]
+
+With 3 of 8 responses correct, correct responses get about $+1.29$ and wrong ones about $-0.77$.
+
+**Vanilla policy gradient (Proposition 1).** For a tabular softmax,
+
+\[
+z^{k+1}_{s,a} - z^{k}_{s,a} = \eta\,\pi_\theta(a \mid s)\,A(s,a)
+\]
+
+so (Theorem 1)
+
+\[
+\mathcal{H}(\pi_\theta^{k+1} \mid s) - \mathcal{H}(\pi_\theta^{k} \mid s)
+\approx -\eta\,\mathrm{Cov}_{a \sim \pi_\theta^k(\cdot \mid s)}\left(\log\pi_\theta^k(a \mid s),\ \pi_\theta^k(a \mid s)\,A(s,a)\right)
+\]
+
+**Natural policy gradient.** NPG is steepest ascent where step size is measured by KL between policies instead of
+Euclidean distance in parameter space, $\theta \leftarrow \theta + \eta F^{-1}\nabla J$ with Fisher matrix $F$. It is
+still policy gradient; the KL metric changes the direction, not just the length. For a tabular softmax the logit
+change is just $\eta A(s,a)$, so (Theorem 2)
+
+\[
+\mathcal{H}(\pi_\theta^{k+1} \mid s) - \mathcal{H}(\pi_\theta^{k} \mid s)
+\approx -\eta\,\mathrm{Cov}_{a \sim \pi_\theta^k(\cdot \mid s)}\left(\log\pi_\theta^k(a \mid s),\ A(s,a)\right)
+\]
+
+Both theorems give the same sign table:
+
+| | High advantage ($A > 0$) | Low advantage ($A < 0$) |
+|---|---|---|
+| **High probability** | entropy ↓ (confident and right) | entropy ↑ (confident and wrong) |
+| **Low probability** | entropy ↑ (unlikely but right) | entropy ↓ (unlikely and wrong) |
+
+The difference is weighting. Under vanilla PG a rare token's logit moves by $\eta\pi A$, so "unlikely but right" is
+damped by its small probability. Under NPG every logit moves by $\eta A$.
+
+The paper's argument for why the covariance is positive in practice: a pretrained model is reasonably calibrated,
+so its confident outputs tend to be correct. Probability and advantage line up, and RL keeps sharpening.
+
+
+## Empirical Verification (Section 3.3)
+
+The theory predicts
+
+\[
+-\Delta\mathcal{H} \propto \mathrm{Cov}(\cdot)
+\]
+
+They run on-policy GRPO without the PPO surrogate on Qwen2.5-7B, treating each response as one action with a
+length-normalized log-prob. In Figure 8 (left), the covariance and the entropy decrease share a shape: large and
+positive early, then smaller but still positive, which explains why entropy only falls. In Figure 8 (right), easy
+prompts have higher covariance than hard ones.
+
+This supports the direction of the effect, but it is not a quantitative check. The curves are on separate axes,
+the constant can't literally be $\eta = 5\times10^{-7}$, and the covariance is sequence-level while entropy is
+token-level.
+
+
+## Why Standard Entropy Control Fails (Section 4.1)
+
+Normally in RL we encourage exploration with an entropy bonus, or penalize KL divergence from a reference model.
+Neither works well here.
+
+**Entropy bonus.** `entropy_coef` is $\alpha$ in
+
+\[
+L_{\text{ent}} = L - \alpha\,\mathcal{H}(\pi_\theta)
+\]
+
+This $L$ is a loss (lower is better), so subtracting $\alpha\mathcal{H}$ rewards entropy. In Figure 9, 0.0001 and
+0.001 barely change entropy, 0.01 makes it explode past 5, and 0.005 stabilizes it without beating the baseline.
+Adding entropy loss does not boost performance. The bonus flattens every token, including the many positions where
+the model should be certain.
+
+**Reference KL.** `kl_coef` is $\beta$ in
+
+\[
+L_{\text{KL}} = L + \beta\,D_{\text{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}}),
+\qquad
+D_{\text{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}}) = \mathbb{E}_{a \sim \pi_\theta}\left[\log\pi_\theta(a) - \log\pi_{\text{ref}}(a)\right]
+\]
+
+In Figure 10, a larger $\beta$ keeps entropy stable but degrades performance. This felt counter-intuitive until I
+split the KL:
+
+\[
+D_{\text{KL}}(\pi \,\|\, \pi_{\text{ref}}) = -\mathcal{H}(\pi) + \mathbb{E}_{a \sim \pi}\left[-\log\pi_{\text{ref}}(a)\right]
+\]
+
+It contains an entropy bonus, but also a pull toward the reference model's favorite tokens. The KL-regularized
+optimum is
+
+\[
+\pi^*(a) \propto \pi_{\text{ref}}(a)\exp\left(r(a)/\beta\right)
+\]
+
+so a larger $\beta$ holds the *whole policy* near the base model, which is exactly what RL is trying to move away
+from. The reference KL is mainly useful in RLHF, where a learned reward model can be hacked. With a verifiable reward
+there is little to protect against, so it mostly costs performance.
+
+
+## Clip-Cov
+
+Section 4 restricts the update of high-covariance tokens instead of regularizing every token. Each token gets a
+centered cross-product (Eq. 10):
+
+\[
+\mathrm{Cov}(y_i) = \left(\log\pi_\theta(y_i) - \frac{1}{N}\sum_{j=1}^{N}\log\pi_\theta(y_j)\right)\cdot\left(A(y_i) - \frac{1}{N}\sum_{j=1}^{N}A(y_j)\right)
+\]
+
+This is each token's term in Theorem 2's covariance. $N$ is the number of tokens scored together; in the verl
+implementation that is the set of response tokens passed to one loss call (a micro-batch), not the full rollout
+batch.
+
+The distribution is extremely heavy-tailed (Table 1, Qwen2.5-7B, step 1):
+
+| Tokens | Mean covariance |
+|---|---|
+| Top 0.02% | 5.654 |
+| Top 0.2% | 3.112 |
+| Top 2% | 1.385 |
+| All | 0.003 |
+
+The top 0.2% alone contribute about twice the whole batch's covariance, so the other 99.8% are net negative. A
+handful of tokens drive the collapse.
+
+Clip-Cov clips a small fraction of high-covariance tokens out of the policy gradient update:
+
+\[
+I_{\text{clip}} = I \sim \mathrm{Uniform}\left(\left\{i \mid \mathrm{Cov}(y_i) \in [\omega_{\text{low}}, \omega_{\text{high}}]\right\},\ \lfloor r \cdot N \rfloor\right)
+\]
+
+This is a random subset of the outliers, of size $\lfloor r \cdot N \rfloor$, where $r$ is the clip ratio. The paper
+uses $\omega_{\text{low}} = 1$, $\omega_{\text{high}} = 5$ and $r = 2\times10^{-4}$. A new subset is drawn each
+update, and tokens scoring above 5 are never touched.
+
+\[
+L_{\text{Clip-Cov}}(\theta) =
+\begin{cases}
+\mathbb{E}_t\left[\dfrac{\pi_\theta(y_t \mid y_{<t})}{\pi_{\theta_{\text{old}}}(y_t \mid y_{<t})}A_t\right], & t \notin I_{\text{clip}} \\[2ex]
+0, & t \in I_{\text{clip}}
+\end{cases}
+\]
+
+Two notes to self:
+
+- This $L$ is an **objective** to maximize (ratio × advantage, like PPO's $L^{\text{CLIP}}$), even though Section 4.1
+  uses $L$ for a loss. The code minimizes $-A_t \rho_t$. If you minimized Eq. 12 as written, a positive advantage
+  would push $\pi_\theta$ *below* $\pi_{\theta_{\text{old}}}$.
+- Setting a term to 0 just means the token contributes no gradient: Clip-Cov **skips the gradient** for these tokens.
+  Their probabilities can still move through shared parameters. The implementation also keeps PPO's ratio clipping
+  for everything else.
+
+Written with a consistent sign convention, and with the PPO clipping the code keeps:
+
+\[
+J_{\text{Clip-Cov}}(\theta) = \mathbb{E}_t\left[\mathbb{1}\{t \notin I_{\text{clip}}\}\cdot\min\left(\rho_t A_t,\ \mathrm{clip}(\rho_t, 1-\epsilon, 1+\epsilon)A_t\right)\right],
+\qquad
+L_{\text{Clip-Cov}} = -J_{\text{Clip-Cov}}
+\]
+
+with importance ratio $\rho_t = \pi_\theta(y_t \mid y_{<t}) / \pi_{\theta_{\text{old}}}(y_t \mid y_{<t})$.
+
+
+## KL-Cov
+
+Rank the tokens by covariance and take the top $k$ fraction:
+
+\[
+I_{\text{KL}} = \left\{i \mid \mathrm{Rank}(\mathrm{Cov}(y_i)) \le k \cdot N\right\}
+\]
+
+$\mathrm{Rank}$ sorts tokens by score, highest first. $k$ is the proportion of tokens subjected to the KL penalty,
+with $k \ll 1$: $2\times10^{-3}$ for 7B and $2\times10^{-4}$ for 32B. Unlike Clip-Cov, there is no upper bound and no
+randomness.
+
+\[
+L_{\text{KL-Cov}}(\theta) =
+\begin{cases}
+\mathbb{E}_t\left[\dfrac{\pi_\theta(y_t \mid y_{<t})}{\pi_{\theta_{\text{old}}}(y_t \mid y_{<t})}A_t\right], & t \notin I_{\text{KL}} \\[2ex]
+\mathbb{E}_t\left[\dfrac{\pi_\theta(y_t \mid y_{<t})}{\pi_{\theta_{\text{old}}}(y_t \mid y_{<t})}A_t - \beta\,D_{\text{KL}}\left(\pi_{\theta_{\text{old}}}(y_t \mid y_{<t}) \,\|\, \pi_\theta(y_t \mid y_{<t})\right)\right], & t \in I_{\text{KL}}
+\end{cases}
+\]
+
+with $\beta = 1$.
+
+- Notation: $y_t$ is the $t$-th response token and $y_{<t} = (y_1, \dots, y_{t-1})$ is everything before it (the
+  prompt $x$ is conditioned on too, just dropped). So $\pi_\theta(y_t \mid y_{<t})$ is one number: the probability
+  of the sampled token given its prefix.
+- That also means the KL as written compares two numbers, which isn't defined. The intended KL is over the full
+  distributions $\pi(\cdot \mid y_{<t})$, and the code uses a single-sample stand-in,
+  $\left\lvert \log\pi_\theta(y_t \mid y_{<t}) - \log\pi_{\theta_{\text{old}}}(y_t \mid y_{<t}) \right\rvert$.
+- The anchor is the rollout policy $\pi_{\theta_{\text{old}}}$, not the initial model, so this only slows each round
+  of updates. With $\beta = 1$, the absolute-value penalty acts like a dead zone: selected tokens with
+  $\lvert A_t \rvert \lesssim 1$ are held in place, and larger ones move more slowly.
+- In the pseudo-code, KL-Cov replaces PPO's ratio clipping rather than adding to it.
+
+Both selections in a few lines (simplified from Listing 1; `log_prob` and `adv` are 1-D tensors over the response
+tokens, padding ignored):
+
+```python
+cov = (log_prob - log_prob.mean()) * (adv - adv.mean())   # Eq. 10
+n = int(ratio * cov.numel())
+
+# Clip-Cov: a random subset of tokens with lb < cov < ub gets no gradient
+cand = torch.nonzero((cov > lb) & (cov < ub)).squeeze(-1)
+clip_idx = cand[torch.randperm(cand.numel())[:n]]
+
+# KL-Cov: the top-n tokens by cov get a penalty toward the rollout policy
+kl_idx = torch.topk(cov, n).indices
+```
+
+Both work as entropy dials (Figure 12): clipping more tokens or raising $\beta$ gives higher entropy, and KL-Cov
+gives smoother curves.
+
+
+## Results
+
+Qwen2.5-7B and 32B, trained on DAPO-MATH (256 prompts × 8 responses, 8 policy updates per rollout batch) and
+evaluated on 7 math benchmarks. Averages from Table 2:
+
+| Model | GRPO | Clip-higher | Clip-Cov | KL-Cov |
+|---|---|---|---|---|
+| Qwen2.5-7B | 38.6 | 38.8 | 40.4 | 40.6 |
+| Qwen2.5-32B | 45.8 | 47.2 | 50.3 | 52.2 |
+
+KL-Cov has a slight edge, mostly on 32B, and gives smoother entropy curves. It was also tuned per model size ($k$
+differs) while Clip-Cov wasn't, and each configuration is a single run.
+
+The headline 15.0% and 14.6% are KL-Cov vs. GRPO on AIME24 and AIME25 for the 32B model:
+
+| | GRPO | KL-Cov | Gain | Out of 30 problems |
+|---|---|---|---|---|
+| AIME24 | 21.8 | 36.8 | +15.0 points | ≈ 4.5 more |
+| AIME25 | 16.2 | 30.8 | +14.6 points | ≈ 4.4 more |
+
+These are percentage points (avg@32), not relative gains. Against Clip-higher the AIME24 edge is only about 0.4
+problems. On easier benchmarks the gain is minimal: MATH-500 goes from 84.2 to 84.6 for KL-Cov on 32B (about 2 of
+500 problems), while Clip-higher drops to 77.2 on the same benchmark, a reminder of how noisy single runs are.
+
+
+## Takeaways and Open Questions
+
+- **Entropy looks like a symptom, not a target.** The entropy bonus raised entropy with no gain, and the authors
+  report no relationship between the entropy level their methods maintain and final performance (Section 4.5).
+- **The selected tokens are probably low-probability ones.** Since $\log\pi \le 0$, a confident token can sit at most
+  about $\mathcal{H}$ above the average log-prob, while a rare token can sit several nats below. With GRPO advantages
+  capped near $\pm 2.65$, confident tokens top out around $\mathcal{H} \times 2.65$, roughly 1 or less, so scores of
+  3 to 5 have to come from rare tokens in wrong responses (the "unlikely and wrong" cell). The paper doesn't report
+  what the selected tokens look like, so this is arithmetic, not measurement.
+- **Missing controls.** Restraining the same number of random tokens, or tuning the entropy bonus to match KL-Cov's
+  entropy, would show whether selecting by covariance is what matters.
+- **The theory is tabular.** Lemma 1 holds for any softmax, but the logit changes in Theorems 1-2 assume
+  independent logits, and the empirical check is qualitative.
