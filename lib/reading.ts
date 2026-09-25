@@ -13,22 +13,40 @@ export type ReadingSummary = {
   venue?: string
   year?: string | number
   dateRead: string // normalized to 'yyyy-mm-dd'
-  topic: string
+  topics: string[] // topics[0] is the note's home section; the rest cross-list it
   tags?: string[]
   description?: string
   readingTime: number
+}
+
+// A declared connection to another note; `reason` says how the two relate.
+export type RelatedRef = {
+  slug: string
+  reason?: string
 }
 
 export type ReadingNote = ReadingSummary & {
   paperUrl?: string
   codeUrl?: string
   order?: number
+  related: RelatedRef[]
   content: string
 }
 
+// `notes` are the section's own notes (its prev/next reading path);
+// `crossListed` are notes whose home is another section but that belong here too.
 export type ReadingGroup = {
   topic: string
   notes: ReadingSummary[]
+  crossListed: ReadingSummary[]
+}
+
+export type ReadingConnection = {
+  slug: string
+  title: string
+  topics: string[]
+  reason?: string
+  description?: string
 }
 
 // gray-matter turns unquoted YAML dates into Date objects; normalize so
@@ -45,6 +63,33 @@ function toDateKey(d: unknown): string {
 function toAuthors(a?: string | string[]): string[] {
   if (!a) return []
   return Array.isArray(a) ? a.map(String) : String(a).split(',').map((s) => s.trim())
+}
+
+// Sections overlap rather than partition the notes: `topics: [A, B]` files a
+// note under A (its home) and cross-lists it in B. `topic: A` is the
+// single-section shorthand.
+function toTopics(topic: unknown, topics: unknown): string[] {
+  const list = [topic, ...(Array.isArray(topics) ? topics : [topics])]
+    .map((t) => String(t ?? '').trim())
+    .filter(Boolean)
+  const unique = Array.from(new Set(list))
+  return unique.length > 0 ? unique : ['Misc']
+}
+
+// `related` takes a list of slugs or a `slug: reason` map. A connection shows
+// on both notes, so declare it once, usually on the later note.
+function toRelated(r: unknown): RelatedRef[] {
+  const entries: [string, unknown][] = []
+  const items = Array.isArray(r) ? r : r ? [r] : []
+  for (const item of items) {
+    if (typeof item === 'string') entries.push([item, undefined])
+    else if (item && typeof item === 'object') entries.push(...Object.entries(item))
+  }
+  return entries.map(([slug, reason]) => {
+    const ref: RelatedRef = { slug: slug.trim() }
+    if (reason) ref.reason = String(reason).trim()
+    return ref
+  })
 }
 
 function readFile(slug: string): ReadingNote | null {
@@ -74,12 +119,13 @@ function readFile(slug: string): ReadingNote | null {
     venue: data.venue,
     year: data.year,
     dateRead,
-    topic: String(data.topic ?? 'Misc'),
+    topics: toTopics(data.topic, data.topics),
     tags: Array.isArray(data.tags) ? data.tags.map(String) : undefined,
     paperUrl: data.paperUrl,
     codeUrl: data.codeUrl,
     description: data.description,
     order: data.order,
+    related: toRelated(data.related),
     content,
     readingTime: computeReadingTime(content),
   }
@@ -113,16 +159,65 @@ export function getSortedReadingNotes(): ReadingNote[] {
   })
 }
 
-// Topics ordered by each topic's earliest note, so topic order follows the
-// reading narrative; reordering topics means editing frontmatter only.
+// Topics ordered by each topic's earliest home note, so topic order follows
+// the reading narrative and cross-listing a note never reshuffles sections;
+// reordering topics means editing frontmatter only.
 export function getReadingGroups(notes: ReadingNote[]): ReadingGroup[] {
-  const map = new Map<string, ReadingSummary[]>()
-  for (const n of notes) {
-    const { content, order, paperUrl, codeUrl, ...summary } = n
-    if (!map.has(n.topic)) map.set(n.topic, [])
-    map.get(n.topic)!.push(summary)
+  const map = new Map<string, ReadingGroup>()
+  const groupFor = (topic: string) => {
+    if (!map.has(topic)) map.set(topic, { topic, notes: [], crossListed: [] })
+    return map.get(topic)!
   }
-  return Array.from(map.entries()).map(([topic, notes]) => ({ topic, notes }))
+  notes.forEach((n) => groupFor(n.topics[0]))
+  for (const n of notes) {
+    const { content, order, paperUrl, codeUrl, related, ...summary } = n
+    n.topics.forEach((topic, i) => {
+      const group = groupFor(topic)
+      ;(i === 0 ? group.notes : group.crossListed).push(summary)
+    })
+  }
+  return Array.from(map.values())
+}
+
+// Links to other notes in the body count as connections too, so linking a
+// note in prose is enough to connect both pages.
+const NOTE_LINK_RE = /\]\(\s*\/reading\/([^)\s#?]+)/g
+
+function outgoingRefs(note: ReadingNote): RelatedRef[] {
+  const linked = Array.from(note.content.matchAll(NOTE_LINK_RE), (m) => ({ slug: m[1] }))
+  return [...note.related, ...linked]
+}
+
+// Connections are symmetric: a note shows what it links to and what links to
+// it. The note's own reason wins over the other side's. Reading order.
+export function getConnections(slug: string, notes: ReadingNote[]): ReadingConnection[] {
+  const self = notes.find((n) => n.slug === slug)
+  if (!self) return []
+  const published = new Set(notes.map((n) => n.slug))
+  const reasons = new Map<string, string | undefined>()
+  const connect = (other: string, reason?: string) => {
+    if (!reasons.get(other)) reasons.set(other, reason)
+  }
+  for (const ref of outgoingRefs(self)) {
+    if (ref.slug === slug) continue
+    if (published.has(ref.slug)) connect(ref.slug, ref.reason)
+    else console.warn(`[reading] ${slug}.mdx: no published note '${ref.slug}' to connect to (typo or draft?)`)
+  }
+  for (const n of notes) {
+    if (n.slug === slug) continue
+    for (const ref of outgoingRefs(n)) {
+      if (ref.slug === slug) connect(n.slug, ref.reason)
+    }
+  }
+  return notes
+    .filter((n) => reasons.has(n.slug))
+    .map((n) => {
+      const c: ReadingConnection = { slug: n.slug, title: n.title, topics: n.topics }
+      const reason = reasons.get(n.slug)
+      if (reason) c.reason = reason
+      else if (n.description) c.description = n.description
+      return c
+    })
 }
 
 export function getReadingSlugs(): string[] {

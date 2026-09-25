@@ -1,0 +1,46 @@
+---
+title: "Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?"
+authors:
+  - Yang Yue
+  - Zhiqi Chen
+  - Rui Lu
+  - Andrew Zhao
+  - Zhaokai Wang
+  - Yang Yue
+  - Shiji Song
+  - Gao Huang
+venue: NeurIPS 2025
+year: 2025
+dateRead: 2026-09-24
+topic: LLM Post-Training
+tags: [rlvr, llm-post-training, reinforcement-learning, reasoning, pass-at-k, distillation]
+paperUrl: https://arxiv.org/abs/2504.13837
+description: This paper uses large-k pass@k evaluation to argue that RLVR improves sampling efficiency without expanding the base model's reasoning boundary, while distillation from a stronger teacher does expand it.
+draft: false
+---
+
+## The question
+ 
+Reinforcement learning with verifiable rewards (RLVR) trains a model on problems where an automatic checker can mark the final answer right or wrong. It's behind much of the recent progress in reasoning models, and the common assumption is that it teaches models new ways to reason. This paper tests that assumption.
+ 
+## How they test it
+ 
+Instead of looking only at pass@1 (is the first answer correct?), the authors measure pass@k for very large k: the chance that at least one of k samples is correct. At large k, pass@k approximates the set of problems a model can solve at all, which they call its reasoning boundary.
+ 
+They compare base models (Qwen2.5 7B, 14B, and 32B, plus LLaMA-3.1-8B) against RLVR-trained versions on math benchmarks including AIME24, MATH500, Minerva, and OlympiadBench.
+ 
+## What they find
+ 
+- **RL wins at small k.** RL-trained models are much more likely to get the answer right on the first try.
+- **Base models catch up at large k.** With enough samples, base models solve as many problems as the RL models, or more. The crossover shows up across models and benchmarks.
+- **It's mostly not lucky guessing.** Manually checking the reasoning behind the base model's hardest correct answers finds valid chains of thought in most cases.
+- **RL concentrates probability.** Per-problem accuracy histograms show RL pushing problems toward 100% accuracy, while some problems the base model solved only rarely drop to 0%.
+- **Distillation is different.** A model distilled from a stronger teacher (DeepSeek-R1-Distill-Qwen-7B) stays ahead of its base model even at large k. It gains abilities the base model didn't have.
+## Takeaway
+ 
+Current RLVR mainly improves *sampling efficiency*. It makes a model reliably produce reasoning it was already capable of, rather than discovering new reasoning. That makes the base model a ceiling, and makes exploration the key open problem for RL on language models.
+ 
+## Caveats
+ 
+The result is debated. ProRL argues that longer, more carefully tuned RL training can push past the base model. [Follow-up work](https://arxiv.org/abs/2506.14245) finds that when the reasoning itself is checked for correctness, not just the final answer, RLVR looks better across all values of k. The experiments also use relatively small open-source RL setups, so they may not reflect frontier-scale training.
+ 

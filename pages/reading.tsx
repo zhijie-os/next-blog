@@ -3,7 +3,25 @@ import Layout, { siteUrl } from '../components/layout'
 import Date from '../components/date'
 import ReadingSidebar from '../components/reading/Sidebar'
 import { getSortedReadingNotes, getReadingGroups } from '../lib/reading'
+import { slugify } from '../lib/slugify'
 import type { ReadingGroup, ReadingSummary } from '../lib/reading'
+
+const topicLinkClass = 'font-medium text-neutral-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline'
+
+function TopicLinks({ topics }: { topics: string[] }) {
+    return (
+        <>
+            {topics.map((t, i) => (
+                <span key={t}>
+                    {i > 0 && ', '}
+                    <Link href={`/reading#${slugify(t)}`} className={topicLinkClass}>
+                        {t}
+                    </Link>
+                </span>
+            ))}
+        </>
+    )
+}
 
 export async function getStaticProps() {
     const groups = getReadingGroups(getSortedReadingNotes())
@@ -28,11 +46,15 @@ export default function ReadingIndex({ groups }: { groups: ReadingGroup[] }) {
 
                 <main className="min-w-0 flex-1 max-w-3xl">
                     {groups.map((group) => (
-                        <section key={group.topic} className="mb-12 border-t border-neutral-200 dark:border-neutral-800 pt-6">
+                        <section
+                            key={group.topic}
+                            id={slugify(group.topic)}
+                            className="mb-12 border-t border-neutral-200 dark:border-neutral-800 pt-6 scroll-mt-4"
+                        >
                             <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-2 mb-1">
                                 {group.topic}
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500">
-                                    {group.notes.length}
+                                    {group.notes.length + group.crossListed.length}
                                 </span>
                             </h2>
                             <ul>
@@ -59,6 +81,11 @@ export default function ReadingIndex({ groups }: { groups: ReadingGroup[] }) {
                                             <span>
                                                 read <Date dateString={note.dateRead} />
                                             </span>
+                                            {note.topics.length > 1 && (
+                                                <span>
+                                                    also in <TopicLinks topics={note.topics.slice(1)} />
+                                                </span>
+                                            )}
                                         </div>
                                         {note.tags && note.tags.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
@@ -75,6 +102,28 @@ export default function ReadingIndex({ groups }: { groups: ReadingGroup[] }) {
                                     </li>
                                 ))}
                             </ul>
+                            {group.crossListed.length > 0 && (
+                                <div className="mt-2 pt-4 border-t border-dashed border-neutral-200 dark:border-neutral-800">
+                                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-1">
+                                        Cross-listed
+                                    </h3>
+                                    <ul>
+                                        {group.crossListed.map((note: ReadingSummary) => (
+                                            <li key={note.slug} className="py-1.5">
+                                                <Link
+                                                    href={`/reading/${note.slug}`}
+                                                    className="text-[15px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline"
+                                                >
+                                                    {note.title}
+                                                </Link>
+                                                <span className="ml-2 text-xs text-neutral-400 dark:text-neutral-500">
+                                                    from <TopicLinks topics={[note.topics[0]]} />
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </section>
                     ))}
                 </main>

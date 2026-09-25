@@ -1,9 +1,21 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
+import { remark } from 'remark'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
 import { normalizeMathDelimiters } from './math'
+import { remarkPostHeadings, tocFromTree } from './markdown'
+import type { TocEntry } from './markdown'
 
 const postsDirectory = path.join(process.cwd(), 'posts')
+
+// Parse with the same plugins the post page renders with, so TOC ids match
+// the rendered headings.
+function extractToc(content: string): TocEntry[] {
+  const processor = remark().use(remarkGfm).use(remarkMath).use(remarkPostHeadings)
+  return tocFromTree(processor.runSync(processor.parse(content)))
+}
 
 export function computeReadingTime(content: string): number {
   const words = content.split(/\s+/).filter(Boolean).length
@@ -72,6 +84,7 @@ export async function getPostData(id: string) {
     id,
     content,
     readingTime: computeReadingTime(content),
+    headings: extractToc(content),
     ...matterResult.data,
   }
 }

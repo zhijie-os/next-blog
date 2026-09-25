@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import { FiExternalLink, FiGithub } from 'react-icons/fi'
 import Date from '../date'
+import { slugify } from '../../lib/slugify'
 import type { ReadingSummary } from '../../lib/reading'
 
 export default function PaperHeader({ note }: { note: ReadingSummary & {
@@ -14,6 +16,19 @@ export default function PaperHeader({ note }: { note: ReadingSummary & {
 
   return (
     <header className="mb-8">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[11px] font-semibold uppercase tracking-wider">
+        {note.topics.map((topic, i) => (
+          <span key={topic} className="flex items-center gap-x-2">
+            {i > 0 && <span className="text-neutral-300 dark:text-neutral-700">·</span>}
+            <Link
+              href={`/reading#${slugify(topic)}`}
+              className="text-neutral-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:no-underline"
+            >
+              {topic}
+            </Link>
+          </span>
+        ))}
+      </div>
       <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
         {note.title}
       </h1>

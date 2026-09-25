@@ -12,6 +12,7 @@ import ReadingSidebar from '../../components/reading/Sidebar'
 import OnThisPage from '../../components/reading/OnThisPage'
 import PrevNext from '../../components/reading/PrevNext'
 import PaperHeader from '../../components/reading/PaperHeader'
+import Connections from '../../components/reading/Connections'
 import { HEADING_RE, slugify, plainText } from '../../lib/slugify'
 import {
     getReadingSlugs,
@@ -19,8 +20,9 @@ import {
     getSortedReadingNotes,
     getReadingGroups,
     getAdjacentNotes,
+    getConnections,
 } from '../../lib/reading'
-import type { ReadingGroup } from '../../lib/reading'
+import type { ReadingGroup, ReadingConnection } from '../../lib/reading'
 
 // MDX components are module-level, never in props (they must survive JSON serialization).
 const mdxComponents = {
@@ -40,11 +42,12 @@ const mdxComponents = {
     ),
 }
 
-export default function ReadingNotePage({ note, headings, mdxSource, groups, previous, next }: {
+export default function ReadingNotePage({ note, headings, mdxSource, groups, connections, previous, next }: {
     note: any
     headings: { level: number; text: string; id: string }[]
     mdxSource: MDXRemoteSerializeResult
     groups: ReadingGroup[]
+    connections: ReadingConnection[]
     previous: any
     next: any
 }) {
@@ -68,11 +71,12 @@ export default function ReadingNotePage({ note, headings, mdxSource, groups, pre
                             <MDXRemote {...mdxSource} components={mdxComponents} />
                         </div>
                     </article>
-                    <PrevNext previous={previous} next={next} />
+                    <Connections connections={connections} />
+                    <PrevNext topic={note.topics[0]} previous={previous} next={next} />
                 </main>
 
                 {headings.length > 0 && (
-                    <OnThisPage headings={headings} className="hidden xl:block" />
+                    <OnThisPage headings={headings} className="w-36 hidden xl:block" />
                 )}
             </div>
         </Layout>
@@ -92,9 +96,10 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
     if (!note) return { notFound: true }
 
     const allNotes = getSortedReadingNotes()
-    // Previous/Next stays within the note's topic, like chapters in a section.
-    const topicNotes = allNotes.filter((n) => n.topic === note.topic)
-    const adjacent = getAdjacentNotes(params.slug, topicNotes)
+    // Previous/Next stays within the note's home topic, like chapters in a
+    // section; cross-listed notes are reached from the sidebar instead.
+    const homeNotes = allNotes.filter((n) => n.topics[0] === note.topics[0])
+    const adjacent = getAdjacentNotes(params.slug, homeNotes)
     const toNavLink = (n: typeof adjacent.previous) => (n ? { slug: n.slug, title: n.title } : null)
     const previous = toNavLink(adjacent.previous)
     const next = toNavLink(adjacent.next)
@@ -107,6 +112,11 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
         id: slugify(plainText(m[2])),
     }))
 
+    const connections = getConnections(params.slug, allNotes)
+    if (connections.length > 0) {
+        headings.push({ level: 2, text: 'Connected notes', id: 'connected-notes' })
+    }
+
     const mdxSource = await serialize(note.content, {
         mdxOptions: {
             remarkPlugins: [remarkGfm, remarkMath],
@@ -116,13 +126,14 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
         },
     })
 
-    const { content, ...rest } = note
+    const { content, related, ...rest } = note
     return {
         props: {
             note: rest,
             headings,
             mdxSource,
             groups: getReadingGroups(allNotes),
+            connections,
             previous,
             next,
         },

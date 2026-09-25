@@ -19,6 +19,9 @@ topic: Piecewise Reinforcement Learning
 tags: [non-stationary-rl, piecewise-stationary-rl, latent-context, context-inference, meta-rl, deep-rl]
 paperUrl: https://arxiv.org/abs/2212.12735
 description: SeCBAD is a deep reinforcement learning method for non-stationary environments with piecewise-stable latent contexts. It jointly infers the posterior over the current context and the current segment length, then conditions the policy on the inferred belief to adapt to abrupt within-episode context changes.
+related:
+  DARLING: "DARLING assumes the MDP stays fixed within an episode and restarts the learner on detection; SeCBAD infers regime changes inside an episode."
+  AVG: "SeCBAD is not streaming (pretrained frozen encoder, PPO, history windows); the open question is SeCBAD-style regime inference inside a strict streaming learner like AVG."
 draft: false
 ---
 

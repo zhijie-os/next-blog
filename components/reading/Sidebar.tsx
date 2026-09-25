@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { FiList, FiSearch, FiX } from 'react-icons/fi'
+import { slugify } from '../../lib/slugify'
 import type { ReadingGroup, ReadingSummary } from '../../lib/reading'
 
 export default function ReadingSidebar({ groups, activeSlug }: {
@@ -30,21 +31,40 @@ export default function ReadingSidebar({ groups, activeSlug }: {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return groups
+    const matches = (n: ReadingSummary) =>
+      [n.title, n.topics.join(' '), n.venue, n.description, n.year, (n.tags || []).join(' ')]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(q) || (n.authors || []).join(' ').toLowerCase().includes(q)
     return groups
       .map((g) => ({
         topic: g.topic,
-        notes: g.notes.filter((n: ReadingSummary) =>
-          [n.title, n.topic, n.venue, n.description, n.year, (n.tags || []).join(' ')]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-            .includes(q) || (n.authors || []).join(' ').toLowerCase().includes(q)
-        ),
+        notes: g.notes.filter(matches),
+        crossListed: g.crossListed.filter(matches),
       }))
-      .filter((g) => g.notes.length > 0)
+      .filter((g) => g.notes.length + g.crossListed.length > 0)
   }, [groups, query])
 
+  // Every note has exactly one home section, so this counts each paper once.
   const total = groups.reduce((acc, g) => acc + g.notes.length, 0)
+
+  const noteLink = (n: ReadingSummary, crossListed: boolean) => (
+    <Link
+      href={`/reading/${n.slug}`}
+      onClick={drawerOpen ? closeDrawer : undefined}
+      title={crossListed ? `Home section: ${n.topics[0]}` : undefined}
+      className={`block text-[13px] leading-snug py-1 pl-3 border-l-2 -ml-px transition-colors hover:no-underline ${
+        activeSlug === n.slug
+          ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 font-medium'
+          : crossListed
+            ? 'border-transparent text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
+            : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+      }`}
+    >
+      {n.title}
+    </Link>
+  )
 
   const list = (
     <div>
@@ -67,27 +87,29 @@ export default function ReadingSidebar({ groups, activeSlug }: {
           <div key={g.topic} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                {g.topic}
+                <Link
+                  href={`/reading#${slugify(g.topic)}`}
+                  onClick={drawerOpen ? closeDrawer : undefined}
+                  className="text-inherit hover:text-neutral-900 dark:hover:text-neutral-200 hover:no-underline"
+                >
+                  {g.topic}
+                </Link>
               </h3>
               <span className="text-[10px] text-neutral-300 dark:text-neutral-600">
-                {g.notes.length}
+                {g.notes.length + g.crossListed.length}
               </span>
             </div>
             <ul className="space-y-px border-l border-neutral-200 dark:border-neutral-800">
               {g.notes.map((n: ReadingSummary) => (
-                <li key={n.slug}>
-                  <Link
-                    href={`/reading/${n.slug}`}
-                    onClick={drawerOpen ? closeDrawer : undefined}
-                    className={`block text-[13px] leading-snug py-1 pl-3 border-l-2 -ml-px transition-colors hover:no-underline ${
-                      activeSlug === n.slug
-                        ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 font-medium'
-                        : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
-                    }`}
-                  >
-                    {n.title}
-                  </Link>
+                <li key={n.slug}>{noteLink(n, false)}</li>
+              ))}
+              {g.crossListed.length > 0 && (
+                <li className="pl-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-300 dark:text-neutral-600">
+                  Cross-listed
                 </li>
+              )}
+              {g.crossListed.map((n: ReadingSummary) => (
+                <li key={n.slug}>{noteLink(n, true)}</li>
               ))}
             </ul>
           </div>

@@ -33,7 +33,7 @@ Here's what sold me:
 
 **The hardware itself.** Panther Lake, LPCAMM RAM (socketed, replaceable), a 20-hour battery, a touchscreen, and a CNC-machined aluminum chassis. All in a 13-inch form factor that doesn't feel like a compromise.
 
-**The upgrade model.** This is the real thing. Framework sells replacement motherboards for each generation. When the next CPU generation comes out, you swap the mainboard — not the whole laptop. The chassis, screen, keyboard, battery, and ports all stay. You buy a $400-600 board instead of a $2,000 laptop. Over a decade, that's thousands saved and a lot less e-waste.
+**The upgrade model.** This is the real thing. Framework sells replacement motherboards for each generation. When the next CPU generation comes out, you swap the mainboard — not the whole laptop. The chassis, screen, keyboard, battery, and ports all stay. You buy a \$400-600 board instead of a \$2,000 laptop. Over a decade, that's thousands saved and a lot less e-waste.
 
 **No OCULINK, but I'll wait.** The Framework 16 has an OCULINK port, but it's too heavy for my taste — I ruled it out on weight alone. The 13 Pro doesn't have OCULINK, but Thunderbolt 5 is coming with 120Gbps bandwidth. That's enough for a respectable external GPU enclosure. I can wait. The MacBook and cloud GPUs cover me until then.
 

@@ -30,6 +30,10 @@ a:hover {
   .dark body {
     @apply bg-neutral-900 text-neutral-100;
   }
+  /* Native scrollbars and form controls follow the theme. */
+  .dark {
+    color-scheme: dark;
+  }
 }
 
 /* Section headings with thin bottom border */
@@ -136,4 +140,147 @@ a:hover {
 
 .post-content :not(pre) > code {
   @apply bg-neutral-100 dark:bg-neutral-800 text-rose-600 dark:text-rose-400 rounded px-1 py-0.5 text-sm font-mono;
+}
+
+.post-content h1 {
+  @apply text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mt-10 mb-4;
+}
+
+/* Wide display math scrolls inside its own box instead of widening the page. */
+.post-content .katex-display {
+  @apply overflow-x-auto overflow-y-hidden py-1;
+}
+
+/* Blog posts: editorial typography layered on .post-content (reading notes
+   keep the base styles). */
+.blog-prose {
+  @apply text-[1.0625rem] leading-[1.8] text-neutral-700 dark:text-neutral-300;
+}
+
+.blog-prose > :first-child {
+  @apply mt-0;
+}
+
+.blog-prose p {
+  @apply my-5;
+}
+
+.blog-prose strong {
+  @apply font-semibold text-neutral-900 dark:text-neutral-100;
+}
+
+.blog-prose h2,
+.blog-prose h3,
+.blog-prose h4 {
+  @apply scroll-mt-8 tracking-tight text-neutral-900 dark:text-neutral-100;
+}
+
+.blog-prose h2 {
+  @apply mt-12 mb-4 border-0 pb-0 text-2xl font-semibold;
+}
+
+.blog-prose h3 {
+  @apply mt-10 mb-3 text-xl font-semibold;
+}
+
+.blog-prose h4 {
+  @apply mt-8 mb-2 text-lg font-semibold;
+}
+
+.blog-prose a {
+  @apply font-medium text-blue-600 dark:text-blue-400 underline decoration-blue-600/30 dark:decoration-blue-400/30 underline-offset-[3px] transition-colors hover:decoration-current;
+}
+
+.blog-prose a.heading-anchor {
+  @apply ml-2 font-normal text-neutral-300 dark:text-neutral-600 no-underline opacity-0 transition-opacity hover:text-neutral-500 dark:hover:text-neutral-400;
+}
+
+.blog-prose h2:hover a.heading-anchor,
+.blog-prose h3:hover a.heading-anchor,
+.blog-prose h4:hover a.heading-anchor,
+.blog-prose a.heading-anchor:focus {
+  @apply opacity-100;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  @apply my-5 pl-6;
+}
+
+.blog-prose li {
+  @apply my-1.5 pl-1.5;
+}
+
+.blog-prose li > ul,
+.blog-prose li > ol {
+  @apply my-2;
+}
+
+.blog-prose li::marker {
+  @apply text-neutral-400 dark:text-neutral-500;
+}
+
+.blog-prose blockquote {
+  @apply my-6 border-l-2 border-neutral-300 dark:border-neutral-700 pl-5 not-italic text-neutral-600 dark:text-neutral-400;
+}
+
+.blog-prose :not(pre) > code {
+  @apply rounded-md border border-neutral-200 dark:border-neutral-700/70 bg-neutral-100/70 dark:bg-neutral-800/70 px-1.5 py-0.5 text-[0.85em] font-medium text-neutral-800 dark:text-neutral-200;
+}
+
+.blog-prose hr {
+  @apply my-12 border-neutral-200 dark:border-neutral-800;
+}
+
+.blog-prose img {
+  @apply my-8 rounded-xl border border-neutral-200 dark:border-neutral-800;
+}
+
+.blog-prose .table-wrap {
+  @apply my-6 overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800;
+}
+
+.blog-prose .table-wrap table {
+  @apply mb-0 text-sm;
+}
+
+.blog-prose .table-wrap th,
+.blog-prose .table-wrap td {
+  @apply border-0 border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5;
+}
+
+.blog-prose .table-wrap tr:last-child td {
+  @apply border-b-0;
+}
+
+.blog-prose .table-wrap th {
+  @apply bg-neutral-50 dark:bg-neutral-800/50 text-neutral-900 dark:text-neutral-100;
+}
+
+/* Code blocks (components/blog/CodeBlock.tsx): token colors follow the theme
+   class, so there is no light-to-dark flash after hydration. */
+.code-block {
+  --code-fg: #1f2328;
+  --code-comment: #6e7781;
+  --code-punct: #57606a;
+  --code-keyword: #cf222e;
+  --code-string: #0a3069;
+  --code-number: #0550ae;
+  --code-function: #8250df;
+  --code-type: #953800;
+}
+
+.dark .code-block {
+  --code-fg: #e6edf3;
+  --code-comment: #8b949e;
+  --code-punct: #b1bac4;
+  --code-keyword: #ff7b72;
+  --code-string: #a5d6ff;
+  --code-number: #79c0ff;
+  --code-function: #d2a8ff;
+  --code-type: #ffa657;
+}
+
+.post-content .code-block pre {
+  @apply m-0 rounded-none;
 }

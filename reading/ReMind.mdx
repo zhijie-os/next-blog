@@ -1,0 +1,417 @@
+---
+title: "Learning to Solve, Forgetting to Retain: Correct-Set Turnover in RLVR"
+authors:
+  - Chuanyu Qin
+  - Chenxu Yang
+  - Qingyi Si
+  - Naibin Gu
+  - Peng Fu
+  - Zheng Lin
+venue: arXiv
+year: 2026
+dateRead: 2026-09-24
+topics: [Continual Reinforcement Learning, LLM Post-Training]
+tags: [reinforcement-learning, rlvr, llm-reasoning, catastrophic-forgetting, experience-replay, grpo, retention]
+paperUrl: https://arxiv.org/abs/2606.03087
+description: During RLVR, prompts the model has already mastered quietly regress. ReMind keeps a review queue of mastered prompts and re-tests them with fresh rollouts, trying to catch regression while repair is still cheap.
+related:
+  Elephant: "Same gradient-interference (NTK) view of forgetting: Elephant makes the kernel sparse through the architecture, ReMind re-checks mastered prompts before the drift grows."
+  CovClip_KLClip: "ReMind's rising entropy checked against the covariance mechanism, which predicts that review should lower entropy, not raise it."
+  Does_RL_REALLY_INCENTIVIZE_REASONING_CAPACITY_IN_LLMs_Beyond_BASE_MODEL: "RLVR narrowing pass@k motivates ReMind, but ReMind protects prompts mastered during training, so it is not a pass@k fix."
+draft: false
+---
+
+
+## The Big Picture
+
+RLVR raises accuracy, but the headline number hides a cost: problems the model had already solved become
+unsolvable again as training continues. The paper frames every RL update as driving two opposing flows:
+
+- **Acquisition flow** ↑: problems the model newly solves.
+- **Regression flow** ↓: problems it used to solve and no longer does.
+
+Together they call this **correct-set turnover**, and it turns retention into an explicit optimization target
+alongside acquisition. The goal is to minimize regression while preserving acquisition, which means answering two
+questions:
+
+1. **Which** mastered prompts are at risk?
+2. **When** should we intervene?
+
+Their answer is **ReMind**: a retention-aware review mechanism that tracks mastered prompts and periodically
+reintroduces them to remind the model of previous solutions.
+
+The authors call this forgetting *intra-task*, to separate it from the cross-task setting of classic continual
+learning, where task A is forgotten while training on task B. Here there is one fixed training set and no task
+switch. Under the broader definition of continual RL, though, this is still a continual learning problem: the
+mechanism is interference through shared parameters, the same thing my Elephant notes analyze with
+$\left<\nabla_w f_w(x), \nabla_w f_w(x_t)\right>$.
+
+
+## Mastery and Correct-Set Turnover
+
+Let $\mathcal{P}$ be the training set. For a prompt $p \in \mathcal{P}$, the true success probability of the
+current policy is $q_t(p) = \Pr[\pi_{\theta_t} \text{ solves } p]$, estimated from $K$ rollouts:
+
+\[
+\hat q_t(p) = \frac{1}{K}\sum_{i=1}^{K}\mathbb{1}[r_i = 1]
+\]
+
+A prompt is **mastered** at step $t$ if every rollout is correct, giving the mastered set
+
+\[
+M_t = \left\{p \in \mathcal{P} : \hat q_t(p) = 1\right\}
+\]
+
+Two properties of $\hat q_t(p)$ matter:
+
+- **Property 1: it is graded.** With $K = 16$, a prompt at $12/16$ is already drifting from mastery, but a single
+  evaluation would still call it correct 75% of the time. The binary right/wrong signal from prior
+  example-forgetting work (Toneva et al., 2019) can't see this regime.
+- **Property 2: it is free.** $\hat q_t(p)$ is the group's mean reward, which GRPO already computes for its
+  advantages. No extra evaluation is needed.
+
+A **regressed** prompt ("regress" = go backward) is one that was mastered at some step and later has
+$\hat q < 1$. Missing even one rollout counts. With $K = 8$:
+
+| Step | Rollouts correct | $\hat q$ | Status |
+|---|---|---|---|
+| 60 | 8/8 | 1.00 | Mastered |
+| 80 | 6/8 | 0.75 | Regressed (drifting) |
+| 100 | 0/8 | 0.00 | Fully forgotten |
+
+One caveat I noted: the strict rule is noisy with few rollouts. A prompt the model solves 90% of the time scores
+8/8 only $0.9^8 \approx 43\%$ of the time, so some measured "regression" is sampling luck rather than forgetting.
+
+
+### Acquisition, regression and retention
+
+$\Delta$ is just a gap in training steps. Comparing $M_t$ with $M_{t+\Delta}$ splits the net change into two
+flows:
+
+- **Acquisition:** $p \notin M_t$ and $p \in M_{t+\Delta}$.
+- **Regression:** $p \in M_t$ and $p \notin M_{t+\Delta}$.
+
+\[
+\text{Retention}_t = \frac{|M_t \cap M_{t+\Delta}|}{|M_t|},
+\qquad
+\text{Regression}_t = 1 - \text{Retention}_t
+\]
+
+Both lie between 0 and 1, since the intersection can never be larger than $M_t$:
+
+\[
+0 \le \text{Retention}_t \le 1, \qquad 0 \le \text{Regression}_t \le 1
+\]
+
+Example: $M_t = \{A, B, C\}$ and $M_{t+\Delta} = \{B, C, D, E\}$. Acquisition is $\{D, E\}$, regression is
+$\{A\}$, the net change is $+1$, and retention is $2/3$. The $+1$ hides one lost problem.
+
+In the figures they also track **correct-set loss**: the *count* of problems ever solved that the current policy
+fails. It is not a training loss, just "lost from the correct set". On a tracked set,
+
+\[
+\text{currently solved} = \text{ever solved} - \text{correct-set loss}
+\]
+
+
+### The plateau observation
+
+Training Qwen3-VL-8B with GRPO, validation accuracy stalls after about 100 steps while correct-set loss keeps
+climbing. The paper reads the plateau as new solutions being cancelled out by forgotten ones.
+
+That is only part of the story. In Figure 5(b) acquisition itself slows down sharply after about step 150, so the
+plateau is acquisition slowing *and* forgetting continuing. Correct-set loss can also rise mechanically, because
+the pool of ever-solved problems keeps growing and lucky one-off solves count as later "forgetting".
+
+
+## The Repair-Window Principle
+
+The abstract claims to "analytically and empirically establish" this principle. My definitions of the pieces:
+
+- **Cost of restoring:** how much training it takes to bring a regressed prompt back to full mastery.
+- **Review delay:** how many steps pass between a prompt being mastered and it being trained on again.
+- **Low-cost window:** the period right after mastery, while the prompt has drifted only slightly and repair is
+  still cheap.
+- **Pipelines fail to exploit it:** standard training keeps no record of which prompts are mastered. A prompt
+  only returns when the data loader reaches it again, typically the next epoch, which is too long.
+
+
+### Drift through gradient interference
+
+Once a prompt is mastered and absent from the batch, updates from other prompts still move it. To first order:
+
+\[
+q_{t+1}(p) \approx q_t(p) - \alpha\,\nabla_\theta q_t(p)^\top g_t
+\]
+
+where $g_t$ is the batch gradient and $\alpha$ the learning rate. $\nabla_\theta q_t(p)^\top g_t$ captures
+**gradient interference**. Writing $g_t$ as the batch average makes the link to the NTK explicit:
+
+\[
+\nabla_\theta q_t(p)^\top g_t = -\frac{1}{N}\sum_{j,i,t} A_{j,i}\,\nabla_\theta q_t(p)^\top \nabla_\theta \log\pi_\theta\left(y_{j,i,t} \mid x_j, y_{j,i,<t}\right)
+\]
+
+Each inner product is a kernel entry between $p$ and one batch token, the same
+$K_w(x, x_t) = \left<\nabla_w f_w(x), \nabla_w f_w(x_t)\right>$ as in the Elephant paper. Elephant attacks
+this through architecture (make the kernel sparse); ReMind attacks it through data scheduling (re-check before
+the drift gets large).
+
+With $q_{t_0}(p) \approx 1$, after $k$ unreviewed steps the paper models the success probability as
+
+\[
+q_{t_0 + k}(p) \approx 1 - k\alpha\delta(p)
+\]
+
+where $\delta(p) > 0$ is an unknown positive scalar summarizing the per-step interference magnitude for $p$.
+
+
+### The $\alpha^2$ argument doesn't hold up
+
+The paper then compares two costs:
+
+\[
+\text{early cost} \sim O(k\alpha\delta) \quad (\text{how much it drifted}),
+\qquad
+\text{late cost} \sim O(1/\alpha) \quad (\text{steps to relearn})
+\]
+
+\[
+\frac{O(k\alpha\delta)}{O(1/\alpha)} = O(k\alpha\delta \cdot \alpha) = O(k\alpha^2\delta)
+\]
+
+and concludes that because this "ratio" is tiny for $\alpha \sim 10^{-6}$, early intervention is cheaper.
+
+This is not clearly explained, and I don't think it means anything:
+
+- **The units don't match.** The numerator is a drop in probability; the denominator is a number of steps. The
+  paper never defines "cost", so there is no principled way to divide one by the other.
+- **The sanity check fails.** At full forgetting, $k\alpha\delta \approx 1$, early and late repair are the same
+  situation and the ratio should be about 1. The formula gives $(k\alpha\delta)\cdot\alpha \approx \alpha = 10^{-6}$.
+  It is small for any $k$ just because $\alpha^2$ is small.
+- **The drift model breaks before full forgetting.** For $k > 1/(\alpha\delta)$ it predicts $q < 0$. It is a
+  first-order approximation, only valid near $q \approx 1$.
+
+A consistent version measures both sides in steps. Drift is about $\alpha\delta$ per step and one review update
+repairs about $\alpha c$, so
+
+\[
+\frac{\text{early repair steps}}{\text{late relearning steps}} \approx \frac{k\delta / c}{1/\alpha} = \frac{k\alpha\delta}{c}
+\]
+
+The ratio is on the order of the drift itself: slipping 5% costs about 5% of relearning, and full forgetting costs
+about as much as relearning.
+
+The paragraph also contradicts itself: it says early review gives a "self-reinforcing gradient that restores
+$q$", and that since all rollouts are correct the review adds almost no gradient noise. If all rollouts are
+correct, every GRPO advantage is zero, so there is no gradient at all, neither noise nor repair.
+
+
+### What actually makes late repair expensive
+
+GRPO only learns from a prompt when its $K$ rollouts are *mixed*. The chance of that is
+
+\[
+P(\text{mixed group}) = 1 - q^K - (1-q)^K
+\]
+
+| $q$ | $P(\text{mixed})$ with $K = 8$ | Situation |
+|---|---|---|
+| 1.0 | 0% | Mastered: nothing to learn |
+| 0.9 | 57% | Slightly drifted: repair is fast |
+| 0.5 | 99% | Maximum signal |
+| 0.01 | 8% | Mostly forgotten: must stumble onto a correct answer first |
+| 0 | 0% | Fully forgotten: no gradient, back to learning from scratch |
+
+The repair window is really the range where groups are still mixed. As $q \to 0$ the learning signal doesn't
+shrink proportionally, it disappears. That is the real mechanism, and it needs no $\alpha^2$.
+
+
+### The empirical check
+
+From a step-60 GRPO checkpoint they take prompts that are 16/16 correct and compare:
+
+- **Early review:** included immediately. Strict retention stays at 85–91% (peak 91.5%).
+- **Delayed review:** withheld for 20 steps. Retention falls to 78–84%; after review resumes it recovers to a
+  peak of 87.7% but never closes the gap (at most 14 fewer prompts retained).
+
+This is the real evidence, and it is narrower than the claim: one delay length against none, at one checkpoint.
+"Cost grows sharply with delay" would need a sweep over delays.
+
+
+## ReMind
+
+ReMind adds one mechanism to GRPO: a review queue that reintroduces mastered prompts into the batch *before*
+rollout generation. It has three parts.
+
+**1. Review queue.** When a prompt reaches $\hat q_t(p) = 1$ and isn't already queued, it is appended to a FIFO
+queue with probability $p_{\text{add}} = 0.25$. Only prompt IDs are stored, so every review generates fresh
+rollouts from the current policy. FIFO order means the prompts mastered longest ago are checked first.
+
+**2. Batch construction.** Every $f$ steps is a review step.
+
+- Non-review steps: the batch is drawn entirely from the training sampler.
+- Review steps: a fraction $r$ of the batch comes from the queue $Q_t$.
+
+\[
+\widetilde{B}_t = B_t^{\text{fresh}} \cup B_t^{\text{review}},
+\qquad
+|B_t^{\text{review}}| = \min\left(\lfloor r \cdot |\widetilde{B}_t| \rfloor,\ |Q_t|\right)
+\]
+
+This is **pre-rollout batch replacement**: review prompts *replace* fresh ones before generation, so the rollout
+count doesn't change. With a batch of 256, $K = 8$, $r = 0.10$ and $f = 5$:
+
+| Step | Fresh prompts | Review prompts | Rollouts |
+|---|---|---|---|
+| Normal | 256 | 0 | 2,048 |
+| Review (every 5th) | 231 | 25 | 2,048 |
+
+That works out to $r/f = 2\%$ of training prompts. It isn't free: displaced fresh prompts get pushed later, and
+review steps still add about 3% wall-clock time.
+
+**3. Queue update.** After rewards are computed:
+
+- A newly mastered prompt is enqueued with probability $p_{\text{add}}$.
+- A review prompt that is still fully correct is **released** (removed from the queue).
+- A review prompt that regressed ($\hat q_t(p) < 1$) goes back to the **tail** for another check.
+
+So the queue gradually fills with the prompts that keep slipping. Two life cycles:
+
+- Stable: mastered at step 40 → enqueued → reviewed at 55, still 8/8 → released.
+- Unstable: mastered at 40 → reviewed at 55, 5/8 → trains on the mixed group, requeued → reviewed at 80, 8/8 →
+  released.
+
+Two things to keep in mind:
+
+- **The "reminding" only happens for slipped prompts.** A review prompt that is still 8/8 has zero advantage and
+  teaches the model nothing; it only confirms retention. Under DAPO it would simply be filtered out.
+- **"Retain" has two meanings.** A prompt that *retains* mastery leaves the queue; a *regressed* prompt is
+  *retained* in the queue.
+
+
+### Blind spots
+
+- **Released prompts are never checked again.** One successful check releases a prompt for good. The main runs
+  are about one epoch (450 steps × 256 prompts ≈ the 123K training set), so a released prompt almost never comes
+  back through the normal stream. If it regresses later, nothing notices.
+- **75% of mastered prompts are never enqueued at all.** With $p_{\text{add}} = 0.25$ most mastered prompts are
+  unprotected from the start.
+- **One check is weak evidence of stability,** because 8/8 is noisy and a prompt stable at step 55 can still
+  drift later.
+
+The paper cites Ebbinghaus and spaced repetition, but real spaced repetition (e.g. Leitner boxes) doesn't retire
+an item after one success; it *lengthens the interval*. Requeueing with a doubling delay, or requiring several
+consecutive passes before release, would be closer to the idea.
+
+
+## Replay vs. ReMind
+
+The baselines ExGRPO, RLEP and RePO are replay methods. The difference is what they store:
+
+| | Replay | ReMind |
+|---|---|---|
+| Stores | Old correct responses | Prompt IDs only |
+| Trains on | Responses from an older policy (off-policy) | Fresh rollouts from the current policy |
+| Knows if a prompt was forgotten? | No, the stored answer is correct by construction | Yes, via $\hat q_t(p)$ |
+| Gradient on review | Always | Only if the prompt slipped |
+| Batch | Usually augmented | Replaced |
+
+None of the three replays mastered prompts specifically; they target efficiency. ExGRPO even does the opposite of
+ReMind: it moves prompts solved in every rollout to a "retired set" and stops replaying them. RLEP replays
+verified-correct solutions from an earlier run, and RePO keeps a per-prompt buffer of past outputs to fix
+zero-gradient groups.
+
+Replay does have one advantage: at 0/8 ReMind gets no gradient, but a stored correct solution can still pull a
+fully forgotten prompt back. A hybrid (re-test with fresh rollouts, fall back to a stored solution at 0/8) seems
+worth trying.
+
+
+## Results
+
+Qwen3-VL-8B-Instruct trained on MMFineReason-123K, evaluated on 8 image-text benchmarks (Table 1):
+
+| Method | MathVision | WeMath | Avg (8 benchmarks) |
+|---|---|---|---|
+| Base model | 47.37 | 54.10 | 57.88 |
+| RePO (best replay) | 53.77 | 63.52 | 62.02 |
+| GRPO | 48.82 | 56.57 | 60.25 |
+| GRPO + ReMind | 56.81 | 66.38 | 64.06 |
+| DAPO | 52.78 | 57.43 | 61.02 |
+| DAPO + ReMind | 57.32 | 68.29 | 64.46 |
+
+The headline deltas (+7.99 on MathVision, +9.81 on WeMath) are measured against plain GRPO, which barely improves
+on the base model on those two benchmarks. Against the best replay baseline the gains are about +3 on each and
+**+2.0 on average**. Still a solid result for about 2% of batch slots, if it survives multiple seeds.
+
+It also generalizes: video understanding goes from 62.88 to 66.09 over GRPO, and on text math with
+Qwen2.5-7B-Math ReMind reaches 52.61 vs. 51.38 for ExGRPO. Gains are larger on math than general benchmarks
+(+5.67 vs. +1.94 over GRPO), which the paper attributes to longer reasoning chains being more fragile.
+
+Things to be careful about:
+
+- **One run per method,** no seeds or variance.
+- **The budget ablation suggests about ±1 point of noise.** 1%, 2%, 4% and 10% review budgets score 62.98,
+  64.06, 63.19 and 62.83, with no clear trend, and the default happens to be best.
+- **A small claim that doesn't match the table.** The text says all three replay methods score below GRPO on
+  ZeroBench, but RePO's 23.50 is above GRPO's 22.60; only ExGRPO (19.01) and RLEP (19.61) are below.
+- **Checkpoint selection** (final vs. best) isn't stated.
+
+
+### Two epochs vs. ReMind
+
+The obvious objection is that ReMind just shows the model data again, so a second epoch should do the same.
+Two-epoch GRPO oscillates around 0.50, peaks at 0.524 at step 740 and ends at 0.497. ReMind reaches 0.524 at
+step 296 (2.5× faster) and ends at 0.539.
+
+The "+4.1 pp" compares ReMind's end with the two-epoch run's end, near the bottom of an oscillation; against the
+two-epoch peak it is about 1.5 points. As an efficiency result it is convincing (double the compute vs. about 3%
+more), but "overfitting" is asserted rather than shown, and only one alternative was tried.
+
+
+### Where the retention gains land
+
+Stratifying 700 validation prompts by base-model accuracy: on unsolvable prompts (0%, $n = 240$) GRPO and ReMind
+are the same, since review can only protect something already learned. On fragile prompts (0–50%, $n = 292$)
+ReMind is +5.1 pp better, consolidates 46.2% of them above 80% accuracy (vs. 40.8%), and fully forgets 6.8%
+(vs. 11.0%).
+
+
+## Training Dynamics and Entropy
+
+Figure 5 is the mechanism claim: both methods acquire new solutions at the same rate (about 500 ever solved by
+step 450), but GRPO ends with about 190 forgotten prompts vs. about 155 for ReMind, and accuracy is 0.47 vs. 0.52.
+Across 79 review events, per-event retention rises from 72% to 82%, yet 4–5 prompts still regress at every event.
+
+The surprising part is entropy. It isn't targeted at all, but ReMind's entropy rises from about 0.4 to about 0.8
+while GRPO's falls to about 0.2. The paper links the two: under GRPO, entropy decline and forgetting onset both
+accelerate between steps 50 and 150, and review "counteracts this concentration".
+
+Reading the plots against the entropy mechanism paper, several things don't fit:
+
+- **Early forgetting is identical despite opposite entropy trends.** In panel (c) ReMind's forgotten count rises
+  just as fast over steps 50–150, while its entropy is rising. The methods only separate after about step 200.
+- **The accuracy gap appears before the forgetting gap.** Around step 100 ReMind already leads (about 0.44 vs.
+  0.41) while acquisition and forgetting are nearly identical, so the early lead isn't explained by retention.
+- **The covariance picture predicts the opposite.** Only slipped review prompts give gradients, and those are
+  mostly-correct groups. Their correct rollouts are *confident and right* and their wrong rollouts tend to
+  contain *unlikely and wrong* tokens, and both cells lower entropy. Review should sharpen, not flatten, unless the
+  regressed prompts drifted to a confident wrong answer.
+- **Higher isn't automatically better.** The entropy paper found no link between entropy level and performance,
+  and ReMind's entropy is still climbing at step 450 rather than leveling off.
+
+So the entropy result is striking, but it is reported as an observation with a plausible story, not a mechanism.
+
+
+## Takeaways and Open Questions
+
+- **Mitigation, not a solution.** The authors say so themselves: ReMind reduces but doesn't eliminate regression,
+  and about 155 prompts are still forgotten. That's roughly an 18% reduction.
+- **The plateau has two causes.** Acquisition slows down and forgetting continues; ReMind recovers a few points by
+  reducing the second. The entropy paper's story (collapse limits exploration) would explain the first.
+- **Pass@k is motivation only.** The introduction cites RLVR narrowing pass@k, but every result is accuracy.
+  ReMind protects prompts mastered *during training*, not problems the base model solved once in 256 tries, so it
+  shouldn't be read as a pass@k fix.
+- **The repair-window math is a heuristic.** $O(k\alpha^2\delta)$ adds a look of rigor without adding
+  information; Figure 2 is the real evidence.
+- **Missing baselines:** ExGRPO without its retired set, re-testing *all* solved prompts without a queue, and
+  spaced-repetition intervals instead of one-shot release.
