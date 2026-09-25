@@ -1,0 +1,445 @@
+---
+title: "The Reasoning Boundary Paradox: How Reinforcement Learning Constrains Language Models"
+authors:
+  - Phuc Minh Nguyen
+  - Chinh D. La
+  - Duy M. H. Nguyen
+  - Nitesh V. Chawla
+  - Binh T. Nguyen
+  - Khoa D. Doan
+venue: arXiv preprint
+year: 2025
+dateRead: 2026-09-24
+topic: LLM Post-Training
+tags: [rlvr, llm-post-training, reinforcement-learning, reasoning, pass-at-k, learning-dynamics]
+paperUrl: https://arxiv.org/abs/2510.02230
+description: This paper traces RLVR's pass@k shrinkage to negative interference and on-policy winner-take-all dynamics, and proposes SELF, a greedy-failure filter plus forward KL that improves large-k coverage over GRPO.
+draft: false
+---
+
+Yue et al. (2025) showed that RLVR-trained models beat their base models at pass@1 but lose at large $k$: the set of problems the model can solve at all shrinks. This paper asks *why*. Its answer has two parts. Training on some problems actively lowers the likelihood of correct solutions to others (**negative interference**), and on-policy sampling makes RLVR reinforce whatever the base model already found most likely (**winner-take-all**). The proposed fix, **SELF** (Selective Examples with Low-likelihood and Forward-KL), trains only on problems where the greedy answer fails and swaps reverse KL for forward KL.
+
+My short take: the mechanism is plausible and SELF's large-$k$ results against GRPO are consistent, but the presentation has errors in most of the key equations, and the diagnostic evidence is weaker than the framing suggests.
+
+## Key ideas
+
+- **Negative interference.** Learning to solve certain training problems actively reduces the likelihood of correct solutions for others, which drives pass@$k$ down.
+- **Winner-take-all.** RLVR disproportionately reinforces problems whose correct solutions already have high likelihood under the base model, while suppressing initially low-likelihood ones.
+- **Each prompt is its own MDP.** Standard RL is effective at learning a single MDP. In LLM reasoning, each problem $x$ induces its own MDP with a distinct, unknown reward function $r(x, \cdot)$, so learning one can hurt another.
+- **SELF.** Selectively trains only on problems with a low likelihood of arriving at correct answers, while preserving previously learned behavior.
+
+## Setup
+
+An LLM policy generates autoregressively:
+
+\[
+\pi(y \mid x) = \prod_{t} \pi(y_t \mid x, y_{\lt t})
+\]
+
+RLVR maximizes a KL-regularized verifiable reward, starting from the base model $\pi_b$:
+
+\[
+\max_{\pi_\theta} \; \mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_\theta(\cdot \mid x)} \Big[ r(x, y) - \beta \, \mathrm{KL}\big(\pi_\theta(\cdot \mid x) \Vert \pi_b(\cdot \mid x)\big) \Big]
+\]
+
+There's no entropy term here, and neither GRPO nor DAPO includes one by default. In their experiments the authors also drop the KL term ($\beta = 0$) and use no entropy loss.
+
+The reward is a per-prompt check:
+
+\[
+r(x, y) = \mathbb{1}\big[\mathrm{answer}(y) = \mathrm{answer}^\star(x)\big]
+\]
+
+so the reward function itself changes from prompt to prompt. (The actual training reward is shaped: $+1$ for a correct boxed answer, $-0.5$ for a wrong boxed answer, and $-1$ otherwise.)
+
+### Two framings from related work
+
+**Churn.** When you update a network on a batch, its outputs also change on inputs that weren't in the batch. That off-batch change is churn. Tang & Berseth (2024) find that plasticity loss correlates with drastic confidence changes of this kind.
+
+**Varying prompt-induced objectives.** Treat each prompt as a task: it defines its own MDP with its own reward function. Every batch then mixes a different set of objectives, so RLVR training looks like multi-task learning where the tasks change from batch to batch, and improving one task can hurt another. This is a much finer-grained notion of "task" than, for example, ReMind, which treats a single dataset as a task.
+
+## Per-step influence
+
+The core tool measures how one update changes the log-likelihood of some other problem–solution pair $(x', y')$:
+
+\[
+\Delta \log \pi_\theta^t(y' \mid x') = \log \pi_{\theta^{t+1}}(y' \mid x') - \log \pi_{\theta^t}(y' \mid x')
+\]
+
+**Proposition 3.1.** For a sufficiently small learning rate $\eta$,
+
+\[
+\Delta \log \pi_\theta^t(y' \mid x') = \eta \, \mathcal{K}^t(x, x', y, y') \, A(x, y) + O(\eta^2)
+\]
+
+where
+
+\[
+\mathcal{K}^t(x, x', y, y') = \nabla_\theta \log \pi_{\theta^t}(y \mid x)^\top \nabla_\theta \log \pi_{\theta^t}(y' \mid x')
+\]
+
+The thing that tripped me up at first: the two pairs play different roles.
+
+- $(x, y)$ is the sample the model is **trained on** at step $t$: a prompt from the training set and a response sampled from $\pi_{\theta^t}$, with advantage $A(x, y)$. It enters only through the parameter update.
+- $(x', y')$ is **any other pair being watched**: another training problem, a test problem, or a probe. It enters through the quantity being measured.
+
+Both gradients in $\mathcal{K}^t$ are evaluated at $\theta^t$, just before the update, and $(x, y)$ belongs to the same step $t$ whose effect is being measured. In practice step $t$ uses a whole batch (64 prompts, 8 rollouts each), so the real change is a sum of these terms over the batch.
+
+### Derivation
+
+The update comes from $(x, y)$:
+
+\[
+\theta^{t+1} = \theta^t + \eta \nabla_\theta \mathcal{J}, \qquad \nabla_\theta \mathcal{J} = A(x, y) \nabla_\theta \log \pi_{\theta^t}(y \mid x)
+\]
+
+\[
+\Delta\theta := \theta^{t+1} - \theta^t = \eta \, A(x, y) \nabla_\theta \log \pi_{\theta^t}(y \mid x)
+\]
+
+**Step 1: turn it into a function of $\theta$.** Let $g(\theta) := \log \pi_\theta(y' \mid x')$. Then
+
+\[
+\Delta \log \pi_\theta^t(y' \mid x') = g(\theta^{t+1}) - g(\theta^t) = g(\theta^t + \Delta\theta) - g(\theta^t)
+\]
+
+**Step 2: first-order expansion.**
+
+\[
+g(\theta^t + \Delta\theta) = g(\theta^t) + \nabla_\theta g(\theta^t)^\top \Delta\theta + O\big(\lVert \Delta\theta \rVert^2\big)
+\]
+
+**Step 3: substitute back.**
+
+\[
+\Delta \log \pi_\theta^t(y' \mid x') = \eta \, A(x, y) \, \nabla_\theta \log \pi_{\theta^t}(y' \mid x')^\top \nabla_\theta \log \pi_{\theta^t}(y \mid x) + O\Big(\eta^2 A(x, y)^2 \big\lVert \nabla_\theta \log \pi_{\theta^t}(y \mid x) \big\rVert^2\Big)
+\]
+
+The advantage is bounded (finite rewards and group normalization), and assuming the gradient norm is bounded too, the remainder is $O(\eta^2)$. That gives Proposition 3.1.
+
+### Aside: why the remainder is $O(\eta^2)$
+
+The first-order Taylor approximation with an explicit error term:
+
+\[
+f(u) = f(a) + f'(a)(u - a) + h_1(u)(u - a), \qquad \lim_{u \to a} h_1(u) = 0
+\]
+
+Solving for the leftover:
+
+\[
+h_1(u) = \frac{f(u) - f(a)}{u - a} - f'(a)
+\]
+
+So $h_1(u)$ is "whatever is left over": the slope of the secant line from $a$ to $u$, minus the slope of the tangent at $a$.
+
+If $f$ is twice differentiable, the Lagrange form makes the error explicit:
+
+\[
+f(u) = f(a) + f'(a)(u - a) + \frac{f''(\xi)}{2}(u - a)^2 \quad \text{for some } \xi \text{ between } a \text{ and } u
+\]
+
+so $h_1(u) = \tfrac{1}{2} f''(\xi)(u - a)$, and when $f''$ is bounded the error is $O\big((u - a)^2\big)$. For a parameter step $\Delta\theta = \eta d$, the squared distance scales like $\eta^2$:
+
+\[
+f(\theta + \eta d) = f(\theta) + \eta \nabla f(\theta)^\top d + O(\eta^2)
+\]
+
+### Reading the result
+
+The sign of each term is the sign of $A \cdot \mathcal{K}$, not of $\mathcal{K}$ alone:
+
+| Training sample | Gradient alignment | Effect on the watched pair |
+|---|---|---|
+| correct, $A \gt 0$ | aligned, $\mathcal{K} \gt 0$ | goes up (positive transfer) |
+| correct, $A \gt 0$ | anti-aligned, $\mathcal{K} \lt 0$ | goes down (negative interference) |
+| incorrect, $A \lt 0$ | anti-aligned, $\mathcal{K} \lt 0$ | goes up |
+
+The last row matters: pushing down a wrong answer can raise a correct one.
+
+## Measuring interference
+
+### A lower bound, not an approximation
+
+$\mathcal{K}^t$ is expensive: it needs per-example gradients over billions of parameters, for every pair. With $\lvert A \rvert \le C$, Proposition 3.1 gives
+
+\[
+\frac{\lvert \Delta \log \pi_\theta^t(y' \mid x') \rvert}{\eta C} \le \lvert \mathcal{K}^t(x, x', y, y') \rvert
+\]
+
+The paper says this lets the measured change approximate $\mathcal{K}$, but it's only a lower bound, and it works in one direction:
+
+- a large observed $\lvert \Delta \rvert$ forces a large $\lvert \mathcal{K} \rvert$, but
+- a small $\lvert \Delta \rvert$ does **not** imply a small $\lvert \mathcal{K} \rvert$, because the change can be small simply because $A \approx 0$.
+
+Luckily, the valid direction is the one the paper needs: if the change keeps growing, gradient entanglement must be growing too. And the change is cheap to measure (forward passes before and after an update), and it's the quantity pass@$k$ actually depends on.
+
+Further gaps: with a batch update the bound constrains a sum over the batch, not one pair; training likely uses an Adam-style optimizer, so the true kernel is preconditioned rather than a raw dot product; and everything is first-order.
+
+### Definition 4.1: interference $\Delta^+$
+
+With the paper's conditioning typo fixed:
+
+\[
+\Delta^+(\pi_{\theta^t}, \mu) = \mathbb{E}_{x' \sim \mathcal{D},\, y^+ \sim \mu(\cdot \mid x')}\Big[ \Delta \log \pi_\theta^t(y^+ \mid x') \Big]
+\]
+
+In words: after one training update, how much did the model's log-likelihood of known-correct answers change, on average? That is, how much does an update affect behavior that was already correct.
+
+- $y^+$ is a correct response and $y^-$ an incorrect one. The $+$ means "filtered to correct answers," not "positive part."
+- $\mu$ is called a behavior policy, but training is still on-policy. $\mu$ only decides where the probe answers come from. The authors use $\mu = \pi_b$ and build the probe set $\mathcal{D}_{\text{prob}}$ once, from 4 base-model samples per training prompt at temperature $0.9$. A fixed base-model set asks the right question (does RLVR lose what the base model could do?) and gives a stable yardstick across training.
+- The base model never changes. $\Delta^+$ tracks how the *trained* model's probability of the base model's correct answers moves. Negative means net damage (negative interference); positive means the update helped.
+- It's a signed average, so it has a magnitude, but a **net** one: gains on some pairs and losses on others cancel. The paper calls it the "direction" of influence; more precisely, it's the net sign of advantage-weighted gradient similarity to correct answers.
+
+Written carefully, "sample $y^+$ from $\mu$" needs a conditioning on correctness, so the precise form is a ratio:
+
+\[
+\Delta^+(\pi_{\theta^t}, \mu) = \frac{\mathbb{E}_{x' \sim \mathcal{D},\, y \sim \mu(\cdot \mid x')}\big[\mathbb{1}\{r(x', y) = 1\} \, \Delta \log \pi_\theta^t(y \mid x')\big]}{\mathbb{E}_{x' \sim \mathcal{D},\, y \sim \mu(\cdot \mid x')}\big[\mathbb{1}\{r(x', y) = 1\}\big]}
+\]
+
+Per-step changes add up (telescope) to the total drift since the start of training:
+
+\[
+\log \pi_{\theta^T}(y^+ \mid x') - \log \pi_{\theta^0}(y^+ \mid x') = \sum_{t=0}^{T-1} \Delta \log \pi_\theta^t(y^+ \mid x')
+\]
+
+### Influence strength $\lVert \Delta \rVert$
+
+\[
+\lVert \Delta(\pi_{\theta^t}, \mu) \rVert = \mathbb{E}_{x' \sim \mathcal{D},\, y \sim \mu(\cdot \mid x')}\Big[ \big(\Delta \log \pi_\theta^t(y \mid x')\big)^2 \Big]
+\]
+
+This is the magnitude of interference per step. It uses all base-model responses, correct or not, and squares the change, so it measures the size of the spillover regardless of direction or correctness. Despite the notation it isn't a norm: there's no square root, so it's a mean squared change.
+
+Plugging in Proposition 3.1, it's roughly $\eta^2$ times the mean of the squared advantage-weighted kernel, so it's large only when gradients of training examples overlap with gradients of unrelated probe examples. If $\mathcal{K}$ were diagonal (every problem with its own direction in parameter space), it would be zero.
+
+| | $\Delta^+$ | Influence strength |
+|---|---|---|
+| Probe responses | correct only | all, correct or not |
+| Per-pair change | signed | squared |
+| Question it answers | Did the update help or hurt previously correct answers? | How big is the spillover onto other examples? |
+
+**Why have both?** For the central claim, $\Delta^+$ mostly suffices. The influence strength adds three things:
+
+1. It separates "nothing moved" from "things moved and cancelled," since a signed average hides offsetting changes:
+
+\[
+\mathbb{E}\big[\Delta^2\big] = \big(\mathbb{E}[\Delta]\big)^2 + \mathrm{Var}[\Delta]
+\]
+
+2. It explains why $\Delta^+$ worsens: rising influence strength shows updates are spilling over more, not just becoming more harmful at the same size.
+3. It supports the regularization argument (clipping doesn't control out-of-batch effects) and the SELF evaluation.
+
+**A caveat the paper glosses over.** Nonzero influence strength isn't necessarily harmful. Positive transfer raises it too, and it's how RLVR improves pass@1 on unseen test problems. Zero spillover would mean no generalization at all. So "the model struggles to distinguish problems" is one interpretation of rising influence strength, not something it shows on its own. The paper's claim holds only because it pairs it with $\Delta^+$.
+
+### Caveats on both definitions
+
+- **The scale of $\log \pi$ is ambiguous.** Appendix C.2 (Eq. 16) defines $\log \pi_\theta(y \mid x)$ as a per-token average, but the perplexity in Eq. (6) divides by $\lvert y \rvert$ again, which only makes sense for a sequence total. The same symbol means two things.
+- **The probe set is biased toward easier problems.** Correct probe answers come from only 4 base-model samples per prompt, so problems with rare correct solutions barely appear, and problems with several correct samples count several times. $\Delta^+$ mostly tracks interference on problems the base model already solves fairly often, not the rare-solution problems that matter most for large $k$.
+
+## Experimental setup
+
+- **Models:** Qwen2.5-Math-1.5B and 7B, Llama-3.2-3B-Instruct.
+- **Training data:** DeepScaleR, about 40k math problems.
+- **Benchmarks:** AIME24, AIME25, Math500, Minerva.
+- **Training:** VERL, GRPO, learning rate $10^{-6}$, batch of 64 prompts with 8 rollouts each, temperature $1$, 500 steps, no reverse KL and no entropy loss.
+- **Evaluation:** temperature $0.6$, top-p $0.95$.
+
+## What the dynamics show (Fig. 2)
+
+Averaged over the four benchmarks (Qwen2.5-Math-1.5B, going by Fig. 10):
+
+- **(A)** Pass@1 rises steadily, while Pass@256 peaks around step 200 and then falls. The model gets sharper but narrower.
+- **(B)** Influence strength roughly doubles over training (about $0.004$ to $0.01$). Each update spills over more onto problems it wasn't trained on.
+- **(C)** $\Delta^+$ starts near zero and drifts down to about $-0.011$. Early updates are roughly neutral for previously correct answers; later ones do more net damage.
+- **(D)** The log-likelihood of the base model's correct answers falls from about $-0.22$ to $-0.27$: the accumulated result of (C).
+
+Together: updates increasingly bleed onto other problems, the bleed increasingly hurts correct answers, and those answers lose probability over time. Larger models suffer more. In Fig. 10, $\Delta^+$ reaches roughly $-0.05$ for the 7B model and roughly $-0.1$ for Llama.
+
+Things to be careful about in panel (A):
+
+- **The axes are heavily zoomed.** Pass@256 goes from about $0.7055$ to $0.7020$, a drop of roughly 0.3 points. The dual axes make it look like a dramatic crossover.
+- **The x-axis starts at step 150,** so the base model's value isn't shown.
+- **Single run, no error bars.** A shift of a few tenths of a point could be within run-to-run variance.
+
+Also, the magnitudes in (C) and (D) don't reconcile. If each step moved per-token log-likelihood by around $-0.005$ on average, 500 steps would lower it by around $2.5$, yet (D) falls by only a few hundredths. The sign and trend are the reliable part; the absolute scale likely reflects some unstated averaging or normalization.
+
+## Does interference predict pass@k? (Fig. 3)
+
+The setup: pick pairs of checkpoints $T$ and $T'$ with $T'$ later, compute $\Delta^+$ between them on correct test-set answers (with the earlier checkpoint as $\mu$), compute the change in Pass@128, and correlate the two across many pairs. Each dot is one checkpoint pair. The fitted line slopes upward on every benchmark, with Pearson $\rho \approx 0.5$ to $0.6$.
+
+The claim is that interference is an indicator of pass@$k$ *decrease*. **AIME24 and AIME25 don't support that claim.** The reference for "did coverage shrink?" is the horizontal line at zero, not the fitted line:
+
+- **AIME25:** almost every dot has negative $\Delta^+$, yet most have positive $\Delta$Pass@128. Even the fitted line stays above zero across nearly the whole range. Negative interference mostly coexists with coverage *gains*.
+- **AIME24:** mixed; plenty of dots show negative interference together with a Pass@k increase.
+- **Math500:** every dot has strongly negative $\Delta^+$ (between $-4.5$ and $-3$), yet many pairs gained coverage. All changes are under 1 point with Pass@128 near its ceiling of about 95%, so this panel is close to noise.
+- **Minerva:** the one panel that fits the story. Most dots are below zero and the fitted line is negative throughout.
+
+It also doesn't look like a clean linear relationship: on the left, many dots sit above the fitted line. Least squares balances squared distances, not counts, so a few far-below dots can pull the line down. The slope may be driven by a handful of extreme pairs; a rank correlation would be more robust, and the paper doesn't report one.
+
+More issues:
+
+- **Training time may drive both axes.** Both quantities trend with training steps, and pairs further apart in time have larger changes on both. The pairs also share checkpoints, so the dots aren't independent.
+- **Part of the link is built in.** Both axes use the same test problems, and lowering the probability of correct answers mechanically lowers the chance of sampling one in 128 tries.
+- **The AIME sets are tiny** (30 problems each), so a few points of Pass@128 is roughly one problem flipping.
+- **$k = 128$ may be below the crossover on AIME.** For the 1.5B model, GRPO beats the base at $k = 1$ (8.50 vs 4.45 on AIME25) but loses at $k = 1024$ (64.05 vs 67.80). If the crossover lies above 128, Pass@128 can keep rising while coverage at larger $k$ shrinks.
+- **The scale differs from Fig. 2(C)** by a factor of hundreds, consistent with cumulative multi-step changes, but unexplained. This is also a different quantity from Definition 4.1, which is per-step.
+
+What the figure actually supports is a **relative** claim: pairs with more negative interference tend to do worse on Pass@128 than pairs with less. Negative $\Delta^+$ often accompanies Pass@k gains, probably because the model also learns new correct solutions while losing old ones, and $\Delta^+$ only sees the losses.
+
+## Why: on-policy sampling and winner-take-all
+
+### Perplexity as a probe
+
+\[
+\mathrm{PPL}_\mu(\pi, \mathcal{D}) = \mathbb{E}_{x \sim \mathcal{D},\, y \sim \mu(\cdot \mid x)}\left[\exp\left(-\frac{1}{\lvert y \rvert}\log \pi(y \mid x)\right)\right]
+\]
+
+Two models play different roles: $\mu$ (the subscript) **writes** the responses, and $\pi$ (the argument) **scores** them. Per response, perplexity is one over the geometric-mean probability $\pi$ assigns to each token:
+
+\[
+\exp\left(-\frac{1}{\lvert y \rvert}\log \pi(y \mid x)\right) = \left(\prod_{t=1}^{\lvert y \rvert} \pi(y_t \mid x, y_{\lt t})\right)^{-1/\lvert y \rvert}
+\]
+
+Perplexity $1$ means $\pi$ predicts every token with certainty; $2$ means a coin flip at every token. The paper's values of about $1.1$ to $1.26$ mean an average per-token probability of roughly $0.9$ down to $0.8$. Lower means "$\pi$ finds these responses natural."
+
+Fig. 4 swaps who writes and who scores:
+
+| Panel | Written by | Scored by | Trend | Meaning |
+|---|---|---|---|---|
+| Left | RL model | base model | falls | RL outputs look increasingly typical to the base model: it's moving into the base model's highest-likelihood regions, not somewhere new. |
+| Middle | base model | RL model | rises | The RL model finds the base model's outputs increasingly unlikely, and correct ones even more so: it's dropping the base model's diversity. |
+| Right | base model | base model | improved problems lower | Problems RLVR improved were ones where the base model was already confident; problems it hurt were ones where it was less confident. |
+
+So RLVR sharpens the base model toward its own most confident outputs. That helps where those outputs were correct, and hurts where the correct answer was in a lower-likelihood region.
+
+Caveats: the right panel's boxes overlap heavily (medians of roughly $1.13$ vs $1.10$); perplexity near 1 is dominated by easy tokens (formatting, restating the problem), which can hide what happens at the few tokens where reasoning branches; and small per-token shifts compound, so the middle panel's rise from about $1.12$ to $1.26$ is a very large drop in whole-response probability over roughly 1,000 tokens.
+
+### What "sharpening" does to one prompt
+
+The shift is about **responses**, not prompts. The model becomes more confident in a narrower set of answers, and less confident in the alternatives the base model used to produce, correct or not. Two illustrative prompts (made-up numbers):
+
+**The base model's favorite answer is correct:**
+
+| Solution | Correct? | Base model | After RLVR |
+|---|---|---|---|
+| A | yes | 50% | 90% |
+| B | yes | 20% | 3% |
+| C | no | 30% | 7% |
+
+Accuracy goes up. But the second correct solution B has almost vanished.
+
+**The base model's favorite answer is wrong:**
+
+| Solution | Correct? | Base model | After RLVR |
+|---|---|---|---|
+| A | no | 60% | 90% |
+| B | yes | 10% | 2% |
+| C | no | 30% | 8% |
+
+The model is now very confident in a wrong answer, and the only correct solution is so rare it may never be sampled even with many tries. This is how pass@$k$ at large $k$ shrinks.
+
+### The on-policy gradient (Fig. 5)
+
+The REINFORCE gradient for an action $y$:
+
+\[
+\nabla_\theta \mathcal{L}^{\text{REINFORCE}} = A(y)\,\nabla_\theta \pi_\theta(y) = A(y)\,\pi_\theta(y)\,\nabla_\theta \log \pi_\theta(y)
+\]
+
+The update is scaled by the response's current probability. In Fig. 5, each panel is a cartoon distribution over responses (x-axis squashed to one dimension), gray before an update and blue after, with red arrows showing how much each marked response moves:
+
+- **Left: a rare correct answer barely moves.** $y^+$ sits in the tail, so rewarding it barely changes the distribution. It's almost never sampled, so it's almost never learned from.
+- **Middle: the rich get richer.** With two correct answers, the one that started more likely gets a much bigger boost. Repeat over many steps and the other fades.
+- **Right: punishing a wrong answer mostly helps the favorite.** $y^-$ (a sampled wrong answer) is pushed down. Under a softmax, each other response's logit rises in proportion to its current probability, so most of the freed mass flows to $y^\star$, the greedy answer, and only a little reaches the correct but rare $y^+$. $y^\star$ can be right or wrong; if it's wrong, you've moved probability from one wrong answer to another. This is the squeezing effect from Ren & Sutherland (2025).
+- **Never sampled means no signal.** If no rollout is correct, every advantage is zero and nothing is learned.
+
+One caveat: in this equation, the $\pi_\theta(y)$ factor is exactly how often $y$ gets sampled. On the rare occasions a low-probability correct answer is sampled, its per-sample update isn't smaller, so "small updates" and "rarely sampled" are the same effect counted twice. In GRPO a rare success can even get a *larger* push: with binary rewards, if 1 of 8 rollouts is correct, group normalization gives it an advantage of about $2.5$. The left panel is more accurate for plain REINFORCE than for GRPO, though a correct answer that's never sampled still gets nothing.
+
+### Isn't sharpening a good thing?
+
+Partly. It's exactly what raises pass@1. But the mechanism decides who gets richer by *probability*, not *correctness*, so it's only good when the favorite answer is right. The paper treats it as a problem for three reasons:
+
+1. **Coverage shrinks.** When the favorite is wrong, the correct answer drops below what even 256 or 1,024 samples will find.
+2. **It spreads across prompts.** Fig. 5 alone is per-prompt dynamics. With shared parameters, a strategy reinforced on training problems gets pushed onto other problems too, including ones where it's the wrong strategy.
+3. **It limits future learning.** RL can only reinforce what it samples. Once alternative solutions vanish, later training can't discover they were better.
+
+If you deploy with a single greedy answer, sharpening is mostly a win. If you rely on many samples, best-of-$n$ with a verifier, or further RL, the lost diversity is a real cost.
+
+### Case study: code vs. language reasoning
+
+Qwen2.5-Math has two reasoning modes: code-based and natural language. During RLVR, code reasoning steadily disappears and language reasoning takes over, because language reasoning had better initial accuracy on the training set. On Minerva, where code reasoning worked better for the base model, performance drops. This is the most convincing illustration in the paper of winner-take-all spreading across prompts.
+
+### Why standard regularizers don't help
+
+- **Clipping** only constrains probability ratios on the training batch. Trust-region violations stay flat on the batch but grow steadily on the probe set (Fig. 7), so clipping doesn't control the out-of-batch damage.
+- **Reverse KL** is mode-seeking. It barely penalizes dropping probability where the policy puts low mass, and it tends to favor collapsing onto the base model's high-likelihood mode.
+
+## SELF
+
+The idea: stop letting the easy problems dominate training, and penalize forgetting what the base model could do. At each step:
+
+1. **Filter.** For every prompt in the batch, generate one greedy answer $y^\star$. If it's already correct, skip the prompt for this update.
+2. **Train on what's left.** Run ordinary GRPO on the kept prompts.
+3. **Don't forget.** Add a small forward-KL term toward the base model, which acts like light supervised training on base-model outputs. Unlike reverse KL, it penalizes dropping probability on anything the base model produces. The weight is tiny: $\beta = 10^{-4}$.
+
+The paper's Eq. (9), as printed:
+
+\[
+\mathcal{J}(\pi_\theta) = \mathbb{E}_{x \sim \mathcal{D},\,(y^\star, y) \sim \pi_\theta(\cdot \mid x)}\Big[\mathbb{1}\{r(x, y^\star) \in \mathcal{C}(x)\}\, r(x, y) - \beta\, \mathrm{KL}(\pi_b \Vert \pi_\theta)\Big], \qquad \mathcal{C}(x) = \{y \mid r(x, y) = 1\}
+\]
+
+This says the opposite of the text: read as "the greedy answer is correct," it keeps only the easy problems. It also puts a reward value inside a set of completions, which doesn't type-check. What they mean:
+
+\[
+\mathcal{J}(\pi_\theta) = \mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_\theta(\cdot \mid x)}\Big[\mathbb{1}\{y^\star \notin \mathcal{C}(x)\}\, r(x, y)\Big] - \beta\, \mathbb{E}_{x \sim \mathcal{D}}\Big[\mathrm{KL}\big(\pi_b(\cdot \mid x) \Vert \pi_\theta(\cdot \mid x)\big)\Big]
+\]
+
+If the greedy answer is wrong, the prompt gets a normal GRPO update; if it's right, the reward term vanishes. The KL term applies to every prompt. Note that $y^\star$ is **never trained on**: it's only a test for whether to keep the prompt, and the update comes from the sampled answers $y$.
+
+### Results
+
+Training dynamics (Fig. 8): SELF's training accuracy is much lower, as expected since it only trains on problems it's failing. By the paper's own metrics it's healthier: higher entropy, less negative $\Delta^+$, smaller influence strength, and fewer trust-region violations.
+
+Selected numbers from Table 1:
+
+| Setting | Base | GRPO | SELF |
+|---|---|---|---|
+| Qwen-7B, AIME25, Pass@1024 | 67.57 | 58.60 | 72.0 |
+| Qwen-1.5B, AIME24, Pass@1024 | 75.86 | 67.77 | 80.94 |
+| Llama-3B, Minerva, Pass@256 | 49.26 | 50.73 | 57.35 |
+| Qwen-1.5B, Minerva, Pass@256 | 70.67 | 65.07 | 68.75 |
+
+Counting across all 12 model–benchmark cells:
+
+- At the largest $k$, SELF beats GRPO in **12 of 12** and beats the base model in **9 of 12**.
+- At pass@1, SELF is slightly below GRPO in **7 of 12**, so there's a small cost.
+
+The extra greedy generation is roughly offset by training on fewer prompts, so overall compute is about the same as GRPO (Appendix G).
+
+### What's missing
+
+- **No ablation.** SELF changes two things, and they're never tested separately. With $\beta = 10^{-4}$, the forward-KL term may contribute little.
+- **No comparison to similar filtering.** DAPO (Yu et al., 2025), which the paper cites, already drops prompts where all rollouts are correct. SELF's filter is stricter but never compared against it.
+- **Single runs, no error bars,** while several Table 1 differences are a point or two.
+- **W-REINFORCE** (Zhu et al., 2025), the other diversity-oriented baseline, only appears in an appendix as training curves (it collapses after about 300 steps), not in the results table.
+
+## Errata I noticed
+
+- **Eq. (5) and the influence-strength definition:** the response should be sampled from $\mu(\cdot \mid x')$, not $\mu(\cdot \mid x)$. The same typo appears in the text after Definition 4.1.
+- **"Sampling $y^+$ from $\mu$"** needs an explicit conditioning on correctness (see the ratio form above).
+- **Influence strength** is written as a norm but is a mean of squares.
+- **Eq. (9):** the indicator is flipped and mixes types.
+- **Appendix C.1, Eq. (13):** expands $\log \pi(y \mid x)$ where it should be $\log \pi(y' \mid x')$, which makes the two pairs look identical.
+- **Proposition C.1:** writes $\mathcal{K}^t(x, x', y, y)$; the last argument should be $y'$.
+- **$\log \pi$ normalization:** per-token in Eq. (16), but Eq. (6) divides by $\lvert y \rvert$ again.
+- **Appendix F** cites Fig. 2 for W-REINFORCE; it should be Fig. 12. **Appendix D** refers to "section 2" for the MLE result, which should point to D.1.
+- **Section 4.2:** "negative inference" should be "negative interference."
+
+## My take
+
+It's an arXiv v1, and it reads like one: errors in nearly every key equation, and diagnostic evidence that is inconsistent in places. The Fig. 3 correlation doesn't support the "pass@$k$ decrease" framing on AIME, the Pass@256 drop in Fig. 2 is about 0.3 points on a zoomed axis, the magnitudes in Figs. 2(C) and 2(D) don't reconcile, and the probe set over-represents problems the base model already solves. The theory is mostly a standard first-order learning-dynamics argument (following Ren & Sutherland, 2025), with a one-directional bound and a bandit analysis that ignores GRPO's advantage normalization.
+
+What holds up: the mechanism (on-policy sampling plus softmax squeezing sharpening the base model's favorites) is plausible and fits related work; the code-to-language collapse on Minerva is a concrete illustration; and SELF beats GRPO at large $k$ in every cell of Table 1, sometimes by a lot.
+
+How I'd cite it: as a proposed mechanism for RLVR's coverage shrinkage, plus a simple intervention with promising large-$k$ results. The diagnostic measurements ($\Delta^+$, influence strength, the Fig. 3 correlation) are suggestive rather than conclusive, and the method lacks ablations and variance estimates.
