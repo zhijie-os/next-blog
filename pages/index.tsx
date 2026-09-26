@@ -2,8 +2,24 @@ import Layout from "../components/layout";
 import Image from "next/image";
 import { useState } from "react";
 import Modal from "../components/modal";
-import { ProjectData } from "../data/projectData";
-import Project from "../components/project";
+import { PageFan } from "../components/PdfPreview";
+import publicationsData from "../data/publications.json";
+import { getPageImages } from "../lib/pdfPreview";
+import type { PageImage } from "../lib/pdfPreview";
+
+type Publication = {
+  title: string;
+  authors: string;
+  venue: string;
+  pdfUrl: string;
+  videoUrl?: string;
+  pages: PageImage[]; // thumbnails from `npm run previews`
+};
+
+export async function getStaticProps() {
+  const publications: Publication[] = publicationsData.map((pub) => ({ ...pub, pages: getPageImages(pub.pdfUrl) }));
+  return { props: { publications } };
+}
 
 const educationData = [
   {
@@ -57,29 +73,8 @@ const experienceData = [
   },
 ];
 
-const publications = [
-  {
-    title: "ACRL: Adaptive Control of Training-Inference Discrepancy for Stable Reinforcement Learning",
-    authors: "Wenwu Fan*, Zhijie Xia*, Qihong Lin* , Zhuo Zheng*, Sihao Wang, Qiang Chen, Liangsheng Zhu",
-    venue: "TMLR 2026",
-    pdfUrl: "/ACRL.pdf",
-  },
-  {
-    title: "RealityEffects: Augmenting 3D Volumetric Videos with Object-Centric Annotation and Dynamic Visual Effects",
-    authors: "Jian Liao, Kevin Van, Zhijie Xia, Ryo Suzuki",
-    venue: "DIS 2024",
-    pdfUrl: "/RealityEffects.pdf",
-  },
-  {
-    title: "RealityCanvas: Augmented Reality Sketching for Embedded and Responsive Scribble Animation Effects",
-    authors: "Zhijie Xia*, Kyzyl Monteiro*, Kevin Van, Ryo Suzuki",
-    venue: "UIST 2023",
-    pdfUrl: "/reality-canvas.pdf",
-  },
-];
-
-export default function Home() {
-  const [selectedPaper, setSelectedPaper] = useState<{ title: string; pdfUrl: string } | null>(null);
+export default function Home({ publications }: { publications: Publication[] }) {
+  const [selectedPaper, setSelectedPaper] = useState<Publication | null>(null);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -149,59 +144,70 @@ export default function Home() {
 
       {/* Two-column layout: main content (left) + timeline (right) */}
       <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 mb-16">
-        {/* Left column: Publications + Projects */}
+        {/* Left column: Publications + Open Source */}
         <div className="lg:w-[70%] min-w-0">
 
           {/* Publications */}
           <section className="pb-10">
             <h2 className="section-heading">Publications</h2>
-            <div className="space-y-6">
-              {publications.map((pub, i) => (
-                <div key={i} className="cv-entry">
-                  <div className="cv-title">
-                    {pub.title}
-                  </div>
-                  <div className="cv-meta mt-0.5">
-                    {pub.authors.split(', ').map((name, j) => (
-                      <span key={j}>
-                        {j > 0 && ', '}
-                        {name.includes('Zhijie Xia') ? (
-                          <strong className="font-semibold text-neutral-800 dark:text-neutral-200">{name}</strong>
-                        ) : (
-                          name
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    <span>{pub.venue}</span>
-                    <span className="text-neutral-300 dark:text-neutral-700">|</span>
+            <div className="space-y-7">
+              {publications.map((pub) => (
+                <div key={pub.pdfUrl} className="group flex items-start gap-5">
+                  {pub.pages.length > 0 && (
                     <button
-                      onClick={() => setSelectedPaper({ title: pub.title, pdfUrl: pub.pdfUrl })}
-                      className="resource-link hover:text-blue-600 dark:hover:text-blue-400"
+                      type="button"
+                      onClick={() => setSelectedPaper(pub)}
+                      aria-label={`Open the PDF of ${pub.title}`}
+                      className="mt-1 w-16 shrink-0 sm:w-[76px]"
                     >
-                      PDF
+                      <PageFan pages={pub.pages} title={pub.title} />
                     </button>
+                  )}
+                  <div className="cv-entry min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaper(pub)}
+                      className="cv-title text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {pub.title}
+                    </button>
+                    <div className="cv-meta mt-0.5">
+                      {pub.authors.split(', ').map((name, j) => (
+                        <span key={j}>
+                          {j > 0 && ', '}
+                          {name.includes('Zhijie Xia') ? (
+                            <strong className="font-semibold text-neutral-800 dark:text-neutral-200">{name}</strong>
+                          ) : (
+                            name
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                      <span>{pub.venue}</span>
+                      <span className="text-neutral-300 dark:text-neutral-700">|</span>
+                      <button
+                        onClick={() => setSelectedPaper(pub)}
+                        className="resource-link hover:text-blue-600 dark:hover:text-blue-400"
+                      >
+                        PDF
+                      </button>
+                      {pub.videoUrl && (
+                        <>
+                          <span className="text-neutral-300 dark:text-neutral-700">|</span>
+                          <a
+                            href={pub.videoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="resource-link hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            Video
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Projects */}
-          <section className="pb-10">
-            <h2 className="section-heading">Projects</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {ProjectData.map((p) => (
-                <Project
-                  key={p.title}
-                  title={p.title}
-                  description={p.description}
-                  imageUrl={p.imageUrl}
-                  link={p.link}
-                  venue={p.venue}
-                  date={p.date}
-                />
               ))}
             </div>
           </section>
@@ -352,6 +358,7 @@ export default function Home() {
           updateShowModal={() => setSelectedPaper(null)}
           title={selectedPaper.title}
           pdfUrl={selectedPaper.pdfUrl}
+          coverSrc={selectedPaper.pages[0]?.src}
         />
       )}
     </Layout>

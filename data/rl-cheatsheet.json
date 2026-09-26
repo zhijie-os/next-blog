@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ppo_cheat_sheet_robotics_llm",
+    "file": "ppo_cheat_sheet_robotics_llm.pdf",
+    "title": "PPO",
+    "subtitle": "Generic, with robotics and LLM variants",
+    "description": "One training iteration end to end: what runs, what stays frozen and where gradients flow. Then robotics vs. LLM side by side with worked examples, and every formula.",
+    "pages": 3
+  },
+  {
+    "id": "sac_cheat_sheet",
+    "file": "sac_cheat_sheet.pdf",
+    "title": "SAC",
+    "subtitle": "Robotics and continuous control",
+    "description": "Soft Actor-Critic as used today: twin Q critics, target critics and automatic temperature, with the four updates behind every gradient step.",
+    "pages": 3
+  },
+  {
+    "id": "target_network_cheat_sheet",
+    "file": "target_network_cheat_sheet.pdf",
+    "title": "Target Networks",
+    "subtitle": "The slow copy behind bootstrapped targets",
+    "description": "What a target network is, why the deadly triad needs one, hard vs. soft updates, and which algorithms use it.",
+    "pages": 3
+  },
+  {
+    "id": "reinforce_cheat_sheet",
+    "file": "reinforce_cheat_sheet.pdf",
+    "title": "REINFORCE",
+    "subtitle": "Robotics and LLM",
+    "description": "The simplest policy-gradient method, step by step: sample episodes, compute returns and a baseline, take one gradient step. Includes the baselines behind RLOO, ReMax and GRPO.",
+    "pages": 3
+  }
+]

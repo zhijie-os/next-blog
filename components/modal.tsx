@@ -1,41 +1,40 @@
-import { Worker, Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
-import '@react-pdf-viewer/core/lib/styles/index.css';
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { FiDownload, FiExternalLink, FiFileText, FiX } from "react-icons/fi";
 
 type ModalProps = {
     showModal: boolean;
     updateShowModal: () => void;
     title: string;
     pdfUrl: string;
+    coverSrc?: string; // shown when the browser can't display PDFs inline
 }
 
-export default function Modal({ showModal, updateShowModal, title, pdfUrl }: ModalProps) {
+// PDFs open in the browser's own viewer (PDFium in Chrome and Edge, PDFKit in
+// Safari). pdf.js-based viewers drop glyphs from fonts re-encoded by macOS
+// "Save as PDF" (every capital A went missing in ACRL.pdf). Browsers without
+// an inline viewer, mostly on Android, get Open and Download instead.
+export default function Modal({ showModal, updateShowModal, title, pdfUrl, coverSrc }: ModalProps) {
     const [mounted, setMounted] = useState(false);
-    const [isDark, setIsDark] = useState(false);
+    const [inline, setInline] = useState(true);
     const [loading, setLoading] = useState(true);
 
-    // Detect dark mode
-    useEffect(() => {
-        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-        check();
-        const obs = new MutationObserver(check);
-        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => obs.disconnect();
-    }, []);
-
-    // Portal mounting + body scroll lock
     useEffect(() => {
         setMounted(true);
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-        }
+        // Older browsers don't expose the flag; assume they can show PDFs.
+        setInline(navigator.pdfViewerEnabled !== false);
+    }, []);
+
+    // Body scroll lock while open
+    useEffect(() => {
+        if (!showModal) return;
+        document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = '';
         };
     }, [showModal]);
 
-    // Esc to close
+    // Esc to close (while focus is outside the PDF frame)
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') updateShowModal();
     }, [updateShowModal]);
@@ -47,15 +46,16 @@ export default function Modal({ showModal, updateShowModal, title, pdfUrl }: Mod
         }
     }, [showModal, handleKeyDown]);
 
-    // Reset loading state when modal opens
     useEffect(() => {
         if (showModal) setLoading(true);
-    }, [showModal]);
+    }, [showModal, pdfUrl]);
 
     if (!showModal || !mounted) return null;
 
+    const actionClass = "p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors";
+
     const modalJSX = (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
@@ -70,62 +70,69 @@ export default function Modal({ showModal, updateShowModal, title, pdfUrl }: Mod
                         <h3 className="text-base sm:text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                             {title}
                         </h3>
-                        {loading && (
+                        {inline && loading && (
                             <div className="h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                         )}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* Download button */}
-                        <a
-                            href={pdfUrl}
-                            download
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
-                            title="Download PDF"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
+                        <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={actionClass} title="Open in a new tab">
+                            <FiExternalLink className="w-5 h-5" />
                         </a>
-                        {/* Close button */}
+                        <a href={pdfUrl} download className={actionClass} title="Download PDF">
+                            <FiDownload className="w-5 h-5" />
+                        </a>
                         <button
-                            onClick={(e) => { e.stopPropagation(); updateShowModal(); }}
-                            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+                            type="button"
+                            onClick={updateShowModal}
+                            className={actionClass}
                             title="Close (Esc)"
+                            autoFocus
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <FiX className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
-                {/* PDF Viewer Area */}
-                <div className="flex-1 bg-neutral-100 dark:bg-neutral-800 overflow-auto">
-                    <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-                        <div className="h-full w-full">
-                            <Viewer
-                                fileUrl={pdfUrl}
-                                defaultScale={SpecialZoomLevel.PageWidth}
-                                renderLoader={(percentages) => (
-                                    <div className="flex flex-col items-center justify-center h-full gap-3">
-                                        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                                            Loading PDF{percentages > 0 ? ` (${Math.round(percentages)}%)` : ''}...
-                                        </span>
-                                    </div>
-                                )}
-                                onDocumentLoad={() => setLoading(false)}
-                                theme={isDark ? 'dark' : 'light'}
-                            />
+                {/* PDF area */}
+                <div className="relative flex-1 bg-neutral-100 dark:bg-neutral-800">
+                    {inline ? (
+                        <iframe
+                            key={pdfUrl}
+                            src={`${pdfUrl}#view=FitH`}
+                            title={title}
+                            className="absolute inset-0 h-full w-full"
+                            onLoad={() => setLoading(false)}
+                        />
+                    ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-5 overflow-auto p-6 text-center">
+                            {coverSrc ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={coverSrc} alt="" className="max-h-[50vh] w-auto max-w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white shadow-sm" />
+                            ) : (
+                                <FiFileText className="h-12 w-12 text-neutral-400" />
+                            )}
+                            <p className="max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
+                                This browser can&apos;t show PDFs inside the page. Open it in your PDF viewer or download it.
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-3">
+                                <a
+                                    href={pdfUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 hover:no-underline dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                                >
+                                    <FiExternalLink /> Open PDF
+                                </a>
+                                <a
+                                    href={pdfUrl}
+                                    download
+                                    className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:no-underline dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                                >
+                                    <FiDownload /> Download
+                                </a>
+                            </div>
                         </div>
-                    </Worker>
-                </div>
-
-                {/* Footer bar */}
-                <div className="flex items-center justify-between px-4 py-2 border-t border-neutral-200 dark:border-neutral-800 text-xs text-neutral-400 dark:text-neutral-500 flex-shrink-0">
-                    <span>Press <kbd className="px-1 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 font-mono text-[11px]">Esc</kbd> to close</span>
-                    <span>Scroll to navigate pages</span>
+                    )}
                 </div>
             </div>
         </div>

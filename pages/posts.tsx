@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { FiRss, FiSearch, FiX } from "react-icons/fi"
+import { FiArrowRight, FiBookmark, FiRss, FiSearch, FiX } from "react-icons/fi"
 import Layout, { siteUrl } from "../components/layout"
 import Date from "../components/date"
+import { SheetFan } from "../components/PdfPreview"
 import { getSortedPostsData } from "../lib/posts"
+import { getCheatSheets } from "../lib/cheatsheet"
+import type { CheatSheet } from "../lib/cheatsheet"
+
+type SheetCover = Pick<CheatSheet, "id" | "title" | "pages" | "preview">
 
 type PostSummary = {
     id: string
@@ -24,10 +29,23 @@ export async function getStaticProps() {
         tags: p.tags ?? [],
         readingTime: p.readingTime,
     }))
+    // Only what the pinned card needs; absent fields are left out, not undefined.
+    const cheatSheets: SheetCover[] = getCheatSheets().map(({ id, title, pages, preview }) => ({
+        id,
+        title,
+        ...(pages ? { pages } : {}),
+        ...(preview ? { preview } : {}),
+    }))
     return {
-        props: { posts },
+        props: { posts, cheatSheets },
         revalidate: 3600,
     }
+}
+
+// "PPO, SAC and Target Networks"; long lists end in "and N more".
+function listTitles(titles: string[]): string {
+    const shown = titles.length > 4 ? [...titles.slice(0, 3), `${titles.length - 3} more`] : titles
+    return shown.length > 1 ? `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}` : shown[0] ?? ""
 }
 
 // Tags shared by two or more posts become filters; one-off tags stay
@@ -47,7 +65,7 @@ const chipClass = (active: boolean) =>
             : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
     }`
 
-export default function Posts({ posts }: { posts: PostSummary[] }) {
+export default function Posts({ posts, cheatSheets }: { posts: PostSummary[]; cheatSheets: SheetCover[] }) {
     const router = useRouter()
     const [search, setSearch] = useState("")
     const activeTag = typeof router.query.tag === "string" ? router.query.tag : null
@@ -84,8 +102,9 @@ export default function Posts({ posts }: { posts: PostSummary[] }) {
             metaDescription="Technical blog posts about LeetCode, CUDA, reinforcement learning, DevOps, and competitive programming."
             ogType="website"
             canonical={`${siteUrl}/posts`}
+            showMiniAvatar
         >
-            <section className="py-12 sm:py-16">
+            <section className="pt-8 pb-12 sm:pt-10 sm:pb-16">
                 <header>
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
                         Blog
@@ -105,6 +124,33 @@ export default function Posts({ posts }: { posts: PostSummary[] }) {
                         </a>
                     </p>
                 </header>
+
+                {cheatSheets.length > 0 && (
+                    <Link
+                        href="/posts/rl-cheat-sheet"
+                        className="group mt-10 flex flex-col-reverse gap-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 sm:flex-row sm:items-center sm:p-6 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30 hover:no-underline transition-colors"
+                    >
+                        <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                <FiBookmark />
+                                Pinned · {cheatSheets.length} sheet{cheatSheets.length === 1 ? "" : "s"}
+                            </p>
+                            <h2 className="mt-2 text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+                                RL Cheat Sheet
+                            </h2>
+                            <p className="mt-1.5 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+                                Visual summaries of RL algorithms, one PDF each: {listTitles(cheatSheets.map((s) => s.title))}.
+                            </p>
+                            <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400">
+                                Open the gallery
+                                <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
+                            </p>
+                        </div>
+                        <div className="mx-auto w-60 shrink-0 sm:mx-0 sm:w-56">
+                            <SheetFan sheets={cheatSheets} />
+                        </div>
+                    </Link>
+                )}
 
                 <div className="mt-10 space-y-4">
                     <div className="relative">

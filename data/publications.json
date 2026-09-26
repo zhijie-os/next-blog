@@ -1,0 +1,22 @@
+[
+  {
+    "title": "ACRL: Adaptive Control of Training-Inference Discrepancy for Stable Reinforcement Learning",
+    "authors": "Wenwu Fan*, Zhijie Xia*, Qihong Lin*, Zhuo Zheng*, Sihao Wang, Qiang Chen, Liangsheng Zhu",
+    "venue": "TMLR 2026",
+    "pdfUrl": "/ACRL.pdf"
+  },
+  {
+    "title": "RealityEffects: Augmenting 3D Volumetric Videos with Object-Centric Annotation and Dynamic Visual Effects",
+    "authors": "Jian Liao, Kevin Van, Zhijie Xia, Ryo Suzuki",
+    "venue": "DIS 2024",
+    "pdfUrl": "/RealityEffects.pdf",
+    "videoUrl": "https://www.youtube.com/watch?v=5x45I-eXqBk"
+  },
+  {
+    "title": "RealityCanvas: Augmented Reality Sketching for Embedded and Responsive Scribble Animation Effects",
+    "authors": "Zhijie Xia*, Kyzyl Monteiro*, Kevin Van, Ryo Suzuki",
+    "venue": "UIST 2023",
+    "pdfUrl": "/reality-canvas.pdf",
+    "videoUrl": "https://www.youtube.com/watch?v=UXKhkd3Briw&t=80s"
+  }
+]

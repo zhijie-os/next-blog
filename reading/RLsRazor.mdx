@@ -1,0 +1,152 @@
+---
+title: "RL's Razor: Why Online Reinforcement Learning Forgets Less"
+authors:
+  - Idan Shenfeld
+  - Jyothish Pari
+  - Pulkit Agrawal
+venue: ICLR 2026
+year: 2026
+dateRead: 2026-09-25
+topic: LLM Post-Training
+tags: [rlvr, llm-post-training, reinforcement-learning, catastrophic-forgetting, kl-divergence, continual-learning]
+paperUrl: https://arxiv.org/abs/2509.04259
+description: This paper shows RL forgets less than SFT at matched new-task accuracy, finds that KL from the base model on the new task predicts forgetting, and attributes RL's advantage to on-policy sampling.
+draft: false
+---
+
+Fine-tune a model with SFT and with RL until both reach the same accuracy on a new task, and RL keeps far more of what the model knew before. This paper argues the algorithm itself is incidental. What predicts forgetting is how far the fine-tuned model has moved from the base model in KL, measured on the new task's inputs, and on-policy RL happens to move less. The authors call this *RL's Razor*: among the many ways to solve a task, RL settles on the one closest to where it started.
+
+It's mainly an empirical paper: a phenomenon, a predictor that explains it, and a light theory section for why RL lands near that predictor's minimum. My notes are on arXiv v1.
+
+## Setup
+
+- **LLMs:** Qwen2.5-3B-Instruct on math (Open-Reasoner-Zero), science Q&A (SciKnowEval Chemistry L-3), and tool use (ToolAlpaca). RL is GRPO with a binary reward and no KL penalty. SFT data for math and science are correct solutions sampled from DeepSeek-R1 and GPT-4o.
+- **Robotics:** OpenVLA-7B on picking up a can in SimplerEnv.
+- **Forgetting** is the average score on unrelated benchmarks (HellaSwag, TruthfulQA, MMLU, IFEval, Winogrande, HumanEval for the LLMs).
+
+Each method gets a hyperparameter sweep, and the comparison is the Pareto frontier of new-task versus prior-task score rather than single runs. RL's frontier is nearly flat. SFT's drops as new-task accuracy rises, most sharply on math.
+
+Because LLM RL is expensive and never really converges, most of the mechanism work is on **ParityMNIST**: predict *any* digit with the right parity, so many different output distributions are equally correct. A 3-layer MLP is pretrained on ParityMNIST plus FashionMNIST, fine-tuned on parity, and forgetting is measured on FashionMNIST.
+
+## Background: entropy, cross-entropy, KL
+
+Notation worth having straight before the rest of the paper.
+
+**Entropy** is how uncertain a distribution is about its own outcomes:
+
+\[
+H(p) = -\sum_y p(y) \log p(y)
+\]
+
+**Cross-entropy** takes samples from one distribution and scores them by another. The outcomes come from $p$ and the surprise comes from $q$:
+
+\[
+H(p, q) = -\sum_y p(y) \log q(y)
+\]
+
+Multiply and divide by $p(y)$ inside the log, split the log, and use $\log(1/x) = -\log x$ to flip the ratio:
+
+\[
+\begin{aligned}
+H(p, q) &= -\sum_y p(y) \log\Big( p(y) \cdot \frac{q(y)}{p(y)} \Big) \\
+&= -\sum_y p(y) \log p(y) - \sum_y p(y) \log \frac{q(y)}{p(y)} \\
+&= \underbrace{-\sum_y p(y) \log p(y)}_{H(p)} + \underbrace{\sum_y p(y) \log \frac{p(y)}{q(y)}}_{D_{\mathrm{KL}}(p \,\|\, q)}
+\end{aligned}
+\]
+
+So cross-entropy is entropy plus KL, $H(p, q) = H(p) + D_{\mathrm{KL}}(p \,\|\, q)$, with
+
+\[
+D_{\mathrm{KL}}(p \,\|\, q) = \mathbb{E}_{y \sim p}\big[\log p(y) - \log q(y)\big]
+\]
+
+The expectation runs over samples from the first argument. That's why KL direction matters: it decides whose samples you average over.
+
+## The forgetting law
+
+Forgetting tracks the forward KL from the base model $\pi_0$ to the fine-tuned model $\pi$, averaged over new-task inputs:
+
+\[
+\mathbb{E}_{x \sim \tau}\big[ D_{\mathrm{KL}}\big(\pi_0(\cdot \mid x) \,\|\, \pi(\cdot \mid x)\big) \big]
+\]
+
+In the terms above, this is $H(\pi_0, \pi) - H(\pi_0)$ per input: how much more surprised the fine-tuned model is by the base model's own outputs than the base model itself is.
+
+On ParityMNIST, RL and SFT runs fall on one curve, and a quadratic fit gets $R^2 = 0.96$. In the LLM experiments it's $0.71$. Competing predictors do worse:
+
+| Predictor (ParityMNIST) | $R^2$ |
+|---|---|
+| Forward KL | 0.96 |
+| Reverse KL | 0.93 |
+| Total variation | 0.80 |
+| Weight change, Fisher-weighted L2 | 0.58 |
+| Activation change, L2 | 0.55 |
+| Weight change, L1 | 0.34 |
+
+Two interventions make KL look causal rather than just correlated. SFT on an "oracle" labeling, the correct distribution closest in KL to the base model, forgets *less* than RL. And SFT distilled from an RL-trained model matches RL's trade-off. What matters is the final distribution, not the algorithm that produced it.
+
+A nice side result: the "sparse RL updates" reported elsewhere turn out to be a bfloat16 artifact. RL's small updates fall below bfloat16's precision, and in float32 the updates are dense with identical performance.
+
+## Why RL moves less
+
+For discrete outputs, SFT minimizes cross-entropy against a supervision distribution $\pi_\beta$ (the annotations), averaged over inputs $x \sim \mathcal{D}$:
+
+\[
+\mathcal{L}_{\mathrm{SFT}}(\pi) = -\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_\beta}\big[\log \pi(y \mid x)\big]
+\]
+
+Policy-gradient RL instead weights the model's own samples by an advantage:
+
+\[
+\mathcal{L}_{\mathrm{RL}}(\pi) = -\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi}\big[A(x, y) \log \pi(y \mid x)\big]
+\]
+
+Per input, the SFT loss is exactly $H(\pi_\beta, \pi) = H(\pi_\beta) + D_{\mathrm{KL}}(\pi_\beta \,\|\, \pi)$. The entropy term is fixed by the data, so SFT minimizes KL to the annotations wherever they sit. Nothing in the loss refers to $\pi_0$.
+
+The two losses differ in two ways:
+
+1. **Sampling distribution.** SFT trains on fixed external annotations; RL trains on outputs generated by its own policy.
+2. **Negative examples.** $A(x, y)$ can be negative, which pushes probability away from bad outputs. SFT has no such term.
+
+A 2×2 on Science Q&A separates the two:
+
+| | Positives only | Positives + negatives |
+|---|---|---|
+| **On-policy** | 1–0 Reinforce | GRPO |
+| **Offline** | SFT | SimPO |
+
+1–0 Reinforce sets $A = 1$ for correct answers and $0$ otherwise, so it's SFT on the model's own correct samples. SimPO brings negatives into offline training by pairing a correct external answer $y_w$ with an incorrect one $y_l$:
+
+\[
+\mathcal{L}_{\mathrm{SimPO}}(\pi) = -\mathbb{E}_{x \sim \mathcal{D},\, y_w \sim \pi_{\beta^+},\, y_l \sim \pi_{\beta^-}}\big[\log \sigma\big(\log \pi(y_w \mid x) - \log \pi(y_l \mid x) - 1\big)\big]
+\]
+
+The two on-policy methods behave alike, as do the two offline ones. On-policy sampling is what matters, not negative gradients, which contradicts Lai et al. (2025).
+
+The theory builds on a classical fact. Sampling from $\pi$ and keeping only correct answers (the set $S$) gives $\pi(\cdot \mid S)$, which is the always-correct distribution closest to $\pi$:
+
+\[
+\pi(\cdot \mid S) = \arg\min_{q \,:\, \mathbb{E}_q[R] = 1} D_{\mathrm{KL}}(q \,\|\, \pi)
+\]
+
+A policy-gradient step points the same way as a step toward fitting this filtered distribution. In the terms above, RL minimizes cross-entropy against its own correct outputs, while SFT minimizes it against external annotations. Alternate filter-then-fit and you get EM, and Theorem 5.2 claims this converges to the optimal representable policy closest to $\pi_0$.
+
+## Connection to the Unlearnability Phenomenon
+
+Both papers probe what RLVR can and can't do, and they fit together uncomfortably well:
+
+- The Razor says RL only reweights what the model already produces. The Unlearnability paper finds hard examples whose correct rollouts come mostly from broken reasoning. Put together: filtering and fitting the model's own lucky answers keeps it close to the base model, which is exactly why it can't build what's missing. The conservatism that prevents forgetting may also be what limits learning. That's my reading, not a claim either paper makes.
+- Neither finds an escape through SFT. Here SFT moves far and forgets; there, SFT on correct solutions doesn't make unlearnable examples learnable.
+- The Razor's ideal endpoint, $\pi_0(\cdot \mid S)$, keeps the base model's odds among correct answers, while the Reasoning Boundary Paradox reports RLVR squeezing out low-likelihood correct answers. They can't both describe where practical RL ends up, and the gap is where the theorem's idealizations bite.
+
+## My take
+
+The Pareto-frontier comparison and the two interventions are the strongest parts, and "measure KL on the new task" is a cheap, usable proxy. The theory is weaker than it looks:
+
+- **The lemma is correct but not new.** Conditioning as the minimum-relative-entropy update is textbook.
+- **Theorem 5.2 is a heuristic.** Policy gradient takes one gradient step toward the fit, not the fit itself, so "equivalent to EM" is loose. The convergence proof is by citation, and the hypotheses conflict: a full-support $\Pi$ can't contain an always-correct policy unless every output is correct. The cited EM theory also gives convergence to *a* solution, not obviously the one closest to $\pi_0$.
+- **The KL directions don't match.** The theory minimizes $D_{\mathrm{KL}}(\pi \,\|\, \pi_0)$, but the law uses $D_{\mathrm{KL}}(\pi_0 \,\|\, \pi)$, which is infinite for any always-correct policy when $\pi_0$ puts mass on wrong answers. The oracle in Appendix B.3 is written in that degenerate direction too; the closed form they compute is presumably the lemma's.
+- **The causal evidence is toy-only.** In LLMs the law is a correlation ($R^2 = 0.71$), and the SFT data come from other model families, so "SFT" partly means "fit a distant distribution." The paper's own oracle and distillation results say as much.
+- **Scope.** 3B models, benchmark averages as the forgetting measure, and a scale ablation (3B to 14B) that's SFT-only. Why new-task KL predicts old-task loss is left open, which the authors acknowledge.
+
+How I'd cite it: strong evidence that on-policy fine-tuning forgets less than SFT on off-policy labels at matched accuracy, and that new-task KL is a good proxy for forgetting. The theory explains the intuition but doesn't prove it.

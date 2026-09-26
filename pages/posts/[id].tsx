@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -110,13 +109,14 @@ export default function PostPage({ postData, older, newer }: {
             ogType="article"
             ogUrl={postUrl}
             canonical={postUrl}
+            showMiniAvatar
         >
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
-            <article className="py-10 sm:py-14">
+            <article className="pt-8 pb-10 sm:pt-10 sm:pb-14">
                 <header className="mb-10 sm:mb-12">
                     <Link
                         href="/posts"
@@ -137,13 +137,6 @@ export default function PostPage({ postData, older, newer }: {
                     )}
 
                     <div className="mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
-                        <Image
-                            src="/images/avatar.jpg"
-                            alt=""
-                            width={24}
-                            height={24}
-                            className="rounded-full"
-                        />
                         <span className="font-medium text-neutral-800 dark:text-neutral-200">Zhijie Xia</span>
                         <span aria-hidden="true" className="text-neutral-300 dark:text-neutral-600">·</span>
                         <Date dateString={postData.date} pattern="MMM d, yyyy" />
